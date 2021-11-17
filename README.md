@@ -82,4 +82,5 @@ func main() {
 
 ## Articles
 
+- English: [Some tips and bothers for Go 1.18 Generics](https://dev.to/codehex/some-tips-and-bothers-for-go-118-generics-lc7)
 - Japanese: [Go 1.18 の Generics を使ったキャッシュライブラリを作った時に見つけた tips と微妙な点](https://zenn.dev/codehex/articles/3e6935ee6d853e)
