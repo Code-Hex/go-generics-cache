@@ -1,0 +1,35 @@
+on:
+  push:
+    branches:
+      - "main"
+    tags:
+      - "v*.*.*"
+  pull_request:
+
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+    # https://github.com/actions/setup-go/issues/21#issuecomment-565704236
+    - name: Install gotip
+      run: |
+        git clone --depth=1 https://go.googlesource.com/go $HOME/gotip
+        cd $HOME/gotip/src
+        ./make.bash
+        echo "GOROOT=$HOME/gotip" >> $GITHUB_ENV
+        echo "$HOME/gotip/bin:$PATH" >> $GITHUB_PATH
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v1
+    - name: Declare some variables
+      id: vars
+      run: |
+        echo "::set-output name=coverage_txt::${RUNNER_TEMP}/coverage.txt"
+    - name: Test Coverage (pkg)
+      run: go test ./... -race -coverprofile=${{ steps.vars.outputs.coverage_txt }}
+    - name: Upload coverage
+      uses: codecov/codecov-action@v2
+      with:
+        files: ${{ steps.vars.outputs.coverage_txt }}
+
