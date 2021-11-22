@@ -122,6 +122,10 @@ func (c *Cache[K, _]) Keys() []K {
 // NumberCache is a in-memory cache which is able to store only Number constraint.
 type NumberCache[K comparable, V Number] struct {
 	*Cache[K, V]
+	// nmu is used to do lock in Increment/Decrement process.
+	// Note that this must be here as a separate mutex because mu in Cache struct is Locked in GetItem,
+	// and if we call mu.Lock in Increment/Decrement, it will cause deadlock.
+	nmu sync.Mutex
 }
 
 // NewNumber creates a new cache for Number constraint.
@@ -135,6 +139,9 @@ func NewNumber[K comparable, V Number]() *NumberCache[K, V] {
 // Returns an error if the item was not found or expired. If there is no error, the
 // incremented value is returned.
 func (nc *NumberCache[K, V]) Increment(k K, n V) (val V, err error) {
+	// In order to avoid lost update, we must lock whole Increment/Decrement process.
+	nc.nmu.Lock()
+	defer nc.nmu.Unlock()
 	got, err := nc.Cache.GetItem(k)
 	if err != nil {
 		return val, err
@@ -151,6 +158,8 @@ func (nc *NumberCache[K, V]) Increment(k K, n V) (val V, err error) {
 // Returns an error if the item was not found or expired. If there is no error, the
 // decremented value is returned.
 func (nc *NumberCache[K, V]) Decrement(k K, n V) (val V, err error) {
+	nc.nmu.Lock()
+	defer nc.nmu.Unlock()
 	got, err := nc.Cache.GetItem(k)
 	if err != nil {
 		return val, err
