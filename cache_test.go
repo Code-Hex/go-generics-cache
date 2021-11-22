@@ -2,6 +2,7 @@ package cache
 
 import (
 	"errors"
+	"sync"
 	"testing"
 	"time"
 )
@@ -81,4 +82,52 @@ func TestGetItemExpired(t *testing.T) {
 		t.Errorf("want %v but got %v", zeroValItem, v)
 	}
 
+}
+
+func TestMultiThreadIncr(t *testing.T) {
+	nc := NewNumber[string, int]()
+	nc.Set("counter", 0)
+
+	var wg sync.WaitGroup
+
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func() {
+			_, err := nc.Increment("counter", 1)
+			if err != nil {
+				t.Logf("err: %v", err)
+			}
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
+
+	if counter, _ := nc.Get("counter"); counter != 100 {
+		t.Errorf("want %v but got %v", 100, counter)
+	}
+}
+
+func TestMultiThreadDecr(t *testing.T) {
+	nc := NewNumber[string, int]()
+	nc.Set("counter", 100)
+
+	var wg sync.WaitGroup
+
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func() {
+			_, err := nc.Decrement("counter", 1)
+			if err != nil {
+				t.Logf("err: %v", err)
+			}
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
+
+	if counter, _ := nc.Get("counter"); counter != 0 {
+		t.Errorf("want %v but got %v", 0, counter)
+	}
 }
