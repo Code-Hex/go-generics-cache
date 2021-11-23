@@ -3,6 +3,8 @@ package lru
 import (
 	"container/list"
 	"sync"
+
+	cache "github.com/Code-Hex/go-generics-cache"
 )
 
 // Cache is a thread safe LRU cache
@@ -12,6 +14,8 @@ type Cache[K comparable, V any] struct {
 	items map[K]*list.Element
 	mu    sync.RWMutex
 }
+
+var _ cache.Cache[interface{}, any] = (*Cache[interface{}, any])(nil)
 
 type item[K comparable, V any] struct {
 	Key   K
