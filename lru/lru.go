@@ -48,10 +48,11 @@ func (c *Cache[K, V]) Get(key K) (zero V, _ bool) {
 func (c *Cache[K, V]) Set(key K, val V) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
 	if e, ok := c.items[key]; ok {
 		// updates cache order
 		c.list.MoveToFront(e)
-		e.Value = val
+		e.Value.(*item[K, V]).Value = val
 		return
 	}
 
@@ -70,7 +71,6 @@ func (c *Cache[K, V]) Set(key K, val V) {
 func (c *Cache[K, V]) Keys() []K {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-
 	keys := make([]K, 0, len(c.items))
 	for ent := c.list.Back(); ent != nil; ent = ent.Prev() {
 		keys = append(keys, ent.Value.(*item[K, V]).Key)
@@ -81,7 +81,7 @@ func (c *Cache[K, V]) Keys() []K {
 // Len returns the number of items in the cache.
 func (c *Cache[K, V]) Len() int {
 	c.mu.RLock()
-	defer c.mu.RLock()
+	defer c.mu.RUnlock()
 	return c.list.Len()
 }
 
