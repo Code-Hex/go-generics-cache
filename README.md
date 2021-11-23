@@ -6,6 +6,8 @@ go-generics-cache is an in-memory key:value store/cache that is suitable for app
 
 - implemented with [Go Generics](https://go.dev/blog/generics-proposal)
 - a thread-safe `map[string]interface{}` with expiration times
+- LRU cache
+  - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/lru/example_test.go)
 
 ## Requirements
 
