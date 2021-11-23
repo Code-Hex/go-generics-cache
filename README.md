@@ -4,8 +4,10 @@
 
 go-generics-cache is an in-memory key:value store/cache that is suitable for applications running on a single machine. This in-memory cache uses [Go Generics](https://go.dev/blog/generics-proposal) which will be introduced in 1.18.
 
+- a thread-safe
 - implemented with [Go Generics](https://go.dev/blog/generics-proposal)
-- a thread-safe `map[string]interface{}` with expiration times
+- Simple `map[string]interface{}` with expiration times
+  - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/simple/example_test.go)
 - LRU cache
   - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/lru/example_test.go)
 
@@ -30,8 +32,6 @@ go version devel go1.18-c2397905e0 Sat Nov 13 03:33:55 2021 +0000 darwin/arm64
 
 See also [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/example_test.go)
 
-playground: https://gotipplay.golang.org/p/FXRk6ngYV-s
-
 ```go
 package main
 
@@ -40,44 +40,24 @@ import (
 	"time"
 
 	cache "github.com/Code-Hex/go-generics-cache"
+	"github.com/Code-Hex/go-generics-cache/simple"
 )
 
 func main() {
-	// Create a cache. key as string, value as int.
-	c1 := cache.New[string, int]()
+	// Create a simple cache. key as string, value as int.
+	simpleCache := simple.New[string, int](simple.WithExpiration(time.Hour))
 
-	// Sets the value of int. you can set with expiration option.
-	c1.Set("foo", 1, cache.WithExpiration(time.Hour))
-
-	// the value never expires.
-	c1.Set("bar", 2)
-
-	foo, ok := c1.Get("foo")
-	if ok {
-		fmt.Println(foo) // 1
-	}
-
-	fmt.Println(c1.Keys()) // outputs "foo" "bar" may random
-
-	// Create a cache. key as int, value as string.
-	c2 := cache.New[int, string]()
-	c2.Set(1, "baz")
-	baz, ok := c2.Get(1)
-	if ok {
-		fmt.Println(baz) // "baz"
-	}
-
-	// Create a cache for Number constraint.. key as string, value as int.
-	nc := cache.NewNumber[string, int]()
+	// Create a cache for Number constraint. key as string, value as int.
+	nc := cache.NewNumber[string, int](simpleCache)
 	nc.Set("age", 26)
 
 	// This will be compile error, because string is not satisfied cache.Number constraint.
-	// nc := cache.NewNumber[string, string]()
+	// nc := cache.NewNumber[string, string](simpleCache)
 
-	incremented, _ := nc.Increment("age", 1)
+	incremented := nc.Increment("age", 1)
 	fmt.Println(incremented) // 27
 
-	decremented, _ := nc.Decrement("age", 1)
+	decremented := nc.Decrement("age", 1)
 	fmt.Println(decremented) // 26
 }
 ```
