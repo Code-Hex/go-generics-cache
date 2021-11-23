@@ -4,6 +4,7 @@ import (
 	"sync"
 )
 
+// Cache is a common-cache interface.
 type Cache[K comparable, V any] interface {
 	Get(key K) (value V, ok bool)
 	Set(key K, val V)
