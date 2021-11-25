@@ -2,12 +2,60 @@ package cache
 
 import (
 	"sync"
+	"time"
 )
 
 // Cache is a common-cache interface.
 type Cache[K comparable, V any] interface {
 	Get(key K) (value V, ok bool)
-	Set(key K, val V)
+	Set(key K, val V, opts ...ItemOption)
+}
+
+// Item is an item
+type Item[K comparable, V any] struct {
+	Key        K
+	Value      V
+	Expiration time.Duration
+	CreatedAt  time.Time
+}
+
+var nowFunc = time.Now
+
+// HasExpired returns true if the item has expired.
+// If the item's expiration is zero value, returns false.
+func (i Item[K, T]) HasExpired() bool {
+	if i.Expiration <= 0 {
+		return false
+	}
+	return i.CreatedAt.Add(i.Expiration).Before(nowFunc())
+}
+
+// ItemOption is an option for cache item.
+type ItemOption func(*itemOptions)
+
+type itemOptions struct {
+	expiration time.Duration // default none
+}
+
+// WithExpiration is an option to set expiration time for any items.
+func WithExpiration(exp time.Duration) ItemOption {
+	return func(o *itemOptions) {
+		o.expiration = exp
+	}
+}
+
+// NewItem creates a new item with specified any options.
+func NewItem[K comparable, V any](key K, val V, opts ...ItemOption) *Item[K, V] {
+	o := new(itemOptions)
+	for _, optFunc := range opts {
+		optFunc(o)
+	}
+	return &Item[K, V]{
+		Key:        key,
+		Value:      val,
+		Expiration: o.expiration,
+		CreatedAt:  nowFunc(),
+	}
 }
 
 // NumberCache is a in-memory cache which is able to store only Number constraint.
