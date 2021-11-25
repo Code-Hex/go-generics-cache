@@ -45,7 +45,7 @@ import (
 
 func main() {
 	// Create a simple cache. key as string, value as int.
-	simpleCache := simple.New[string, int](simple.WithExpiration(time.Hour))
+	simpleCache := simple.NewCache[string, int](simple.WithExpiration(time.Hour))
 
 	// Create a cache for Number constraint. key as string, value as int.
 	nc := cache.NewNumber[string, int](simpleCache)

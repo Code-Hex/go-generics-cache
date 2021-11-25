@@ -9,7 +9,7 @@ import (
 )
 
 func TestMultiThreadIncr(t *testing.T) {
-	nc := cache.NewNumber[string, int](simple.New[string, int]())
+	nc := cache.NewNumber[string, int](simple.NewCache[string, int]())
 	nc.Set("counter", 0)
 
 	var wg sync.WaitGroup
@@ -30,7 +30,7 @@ func TestMultiThreadIncr(t *testing.T) {
 }
 
 func TestMultiThreadDecr(t *testing.T) {
-	nc := cache.NewNumber[string, int](simple.New[string, int]())
+	nc := cache.NewNumber[string, int](simple.NewCache[string, int]())
 	nc.Set("counter", 100)
 
 	var wg sync.WaitGroup

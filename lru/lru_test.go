@@ -8,7 +8,7 @@ import (
 
 func TestSet(t *testing.T) {
 	// set capacity is 1
-	cache := lru.NewCap[string, int](1)
+	cache := lru.NewCacheWithCap[string, int](1)
 	cache.Set("foo", 1)
 	if got := cache.Len(); got != 1 {
 		t.Fatalf("invalid length: %d", got)
@@ -44,7 +44,7 @@ func TestSet(t *testing.T) {
 }
 
 func TestContains(t *testing.T) {
-	cache := lru.New[string, int]()
+	cache := lru.NewCache[string, int]()
 	cache.Set("foo", 1)
 	cache.Set("bar", 2)
 	cache.Set("baz", 3)
@@ -60,7 +60,7 @@ func TestContains(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	cache := lru.NewCap[string, int](1)
+	cache := lru.NewCacheWithCap[string, int](1)
 	cache.Set("foo", 1)
 	if got := cache.Len(); got != 1 {
 		t.Fatalf("invalid length: %d", got)

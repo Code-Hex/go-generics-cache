@@ -8,7 +8,7 @@ import (
 )
 
 func ExampleNumberCache() {
-	c := cache.NewNumber[string, int](simple.New[string, int]())
+	c := cache.NewNumber[string, int](simple.NewCache[string, int]())
 	c.Set("a", 1)
 	c.Set("b", 2)
 	av := c.Increment("a", 1)

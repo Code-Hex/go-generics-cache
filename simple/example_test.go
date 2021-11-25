@@ -9,7 +9,7 @@ import (
 )
 
 func ExampleCache() {
-	c := simple.New[string, int](simple.WithExpiration(time.Hour))
+	c := simple.NewCache[string, int](simple.WithExpiration(time.Hour))
 	c.Set("a", 1)
 	c.Set("b", 2)
 	av, aok := c.Get("a")
@@ -25,7 +25,7 @@ func ExampleCache() {
 }
 
 func ExampleCacheKeys() {
-	c := simple.New[string, int]()
+	c := simple.NewCache[string, int]()
 	c.Set("a", 1)
 	c.Set("b", 2)
 	c.Set("c", 3)
