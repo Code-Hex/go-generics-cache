@@ -22,13 +22,13 @@ type item[K comparable, V any] struct {
 	Value V
 }
 
-// New creates a new LRU cache whose capacity is the default size (128).
-func New[K comparable, V any]() *Cache[K, V] {
-	return NewCap[K, V](128)
+// NewCache creates a new LRU cache whose capacity is the default size (128).
+func NewCache[K comparable, V any]() *Cache[K, V] {
+	return NewCacheWithCap[K, V](128)
 }
 
-// NewCap creates a new LRU cache whose capacity is the specified size.
-func NewCap[K comparable, V any](cap int) *Cache[K, V] {
+// NewCacheWithCap creates a new LRU cache whose capacity is the specified size.
+func NewCacheWithCap[K comparable, V any](cap int) *Cache[K, V] {
 	return &Cache[K, V]{
 		cap:   cap,
 		list:  list.New(),

@@ -7,7 +7,7 @@ import (
 )
 
 func ExampleLRUCache() {
-	c := lru.New[string, int]()
+	c := lru.NewCache[string, int]()
 	c.Set("a", 1)
 	c.Set("b", 2)
 	av, aok := c.Get("a")
@@ -23,7 +23,7 @@ func ExampleLRUCache() {
 }
 
 func ExampleCacheKeys() {
-	c := lru.New[string, int]()
+	c := lru.NewCache[string, int]()
 	c.Set("a", 1)
 	c.Set("b", 2)
 	c.Set("c", 3)

@@ -59,7 +59,7 @@ func TestHasExpired(t *testing.T) {
 }
 
 func TestGetItemExpired(t *testing.T) {
-	c := New[struct{}, int]()
+	c := NewCache[struct{}, int]()
 	c.SetItem(struct{}{}, &Item[int]{
 		Value:      1,
 		Expiration: time.Hour * 24,

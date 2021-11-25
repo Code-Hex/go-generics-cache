@@ -44,8 +44,8 @@ type Cache[K comparable, V any] struct {
 
 var _ cache.Cache[interface{}, any] = (*Cache[interface{}, any])(nil)
 
-// New creates a new cache.
-func New[K comparable, V any](opts ...Option) *Cache[K, V] {
+// NewCache creates a new cache.
+func NewCache[K comparable, V any](opts ...Option) *Cache[K, V] {
 	o := new(options)
 	for _, optFunc := range opts {
 		optFunc(o)
