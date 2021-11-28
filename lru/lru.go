@@ -17,11 +17,6 @@ type Cache[K comparable, V any] struct {
 
 var _ cache.Cache[interface{}, any] = (*Cache[interface{}, any])(nil)
 
-type item[K comparable, V any] struct {
-	Key   K
-	Value V
-}
-
 // NewCache creates a new LRU cache whose capacity is the default size (128).
 func NewCache[K comparable, V any]() *Cache[K, V] {
 	return NewCacheWithCap[K, V](128)
@@ -32,7 +27,7 @@ func NewCacheWithCap[K comparable, V any](cap int) *Cache[K, V] {
 	return &Cache[K, V]{
 		cap:   cap,
 		list:  list.New(),
-		items: make(map[K]*list.Element),
+		items: make(map[K]*list.Element, cap),
 	}
 }
 
@@ -40,30 +35,33 @@ func NewCacheWithCap[K comparable, V any](cap int) *Cache[K, V] {
 func (c *Cache[K, V]) Get(key K) (zero V, _ bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	if e, ok := c.items[key]; ok {
-		// updates cache order
-		c.list.MoveToFront(e)
-		return e.Value.(*item[K, V]).Value, true
+	e, ok := c.items[key]
+	if !ok {
+		return
 	}
-	return
+	item := e.Value.(*cache.Item[K, V])
+	if item.HasExpired() {
+		return
+	}
+	// updates cache order
+	c.list.MoveToFront(e)
+	return item.Value, true
 }
 
 // Set sets a value to the cache with key. replacing any existing value.
-func (c *Cache[K, V]) Set(key K, val V) {
+func (c *Cache[K, V]) Set(key K, val V, opts ...cache.ItemOption) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	if e, ok := c.items[key]; ok {
 		// updates cache order
 		c.list.MoveToFront(e)
-		e.Value.(*item[K, V]).Value = val
+		e.Value.(*cache.Item[K, V]).Value = val
 		return
 	}
 
-	e := c.list.PushFront(&item[K, V]{
-		Key:   key,
-		Value: val,
-	})
+	item := cache.NewItem(key, val, opts...)
+	e := c.list.PushFront(item)
 	c.items[key] = e
 
 	if c.list.Len() > c.cap {
@@ -77,7 +75,8 @@ func (c *Cache[K, V]) Keys() []K {
 	defer c.mu.RUnlock()
 	keys := make([]K, 0, len(c.items))
 	for ent := c.list.Back(); ent != nil; ent = ent.Prev() {
-		keys = append(keys, ent.Value.(*item[K, V]).Key)
+		item := ent.Value.(*cache.Item[K, V])
+		keys = append(keys, item.Key)
 	}
 	return keys
 }
@@ -102,8 +101,12 @@ func (c *Cache[K, V]) Delete(key K) {
 func (c *Cache[K, V]) Contains(key K) bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	_, ok := c.items[key]
-	return ok
+	e, ok := c.items[key]
+	if !ok {
+		return false
+	}
+	item := e.Value.(*cache.Item[K, V])
+	return !item.HasExpired()
 }
 
 func (c *Cache[K, V]) deleteOldest() {
@@ -113,6 +116,6 @@ func (c *Cache[K, V]) deleteOldest() {
 
 func (c *Cache[K, V]) delete(e *list.Element) {
 	c.list.Remove(e)
-	item := e.Value.(*item[K, V])
+	item := e.Value.(*cache.Item[K, V])
 	delete(c.items, item.Key)
 }
