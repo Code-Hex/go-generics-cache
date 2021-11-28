@@ -43,22 +43,6 @@ func TestSet(t *testing.T) {
 	}
 }
 
-func TestContains(t *testing.T) {
-	cache := lru.NewCache[string, int]()
-	cache.Set("foo", 1)
-	cache.Set("bar", 2)
-	cache.Set("baz", 3)
-	for _, key := range []string{
-		"foo",
-		"bar",
-		"baz",
-	} {
-		if !cache.Contains(key) {
-			t.Errorf("not found: %s", key)
-		}
-	}
-}
-
 func TestDelete(t *testing.T) {
 	cache := lru.NewCacheWithCap[string, int](1)
 	cache.Set("foo", 1)

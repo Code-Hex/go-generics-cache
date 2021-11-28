@@ -27,7 +27,7 @@ func NewCacheWithCap[K comparable, V any](cap int) *Cache[K, V] {
 	return &Cache[K, V]{
 		cap:   cap,
 		list:  list.New(),
-		items: make(map[K]*list.Element),
+		items: make(map[K]*list.Element, cap),
 	}
 }
 
@@ -75,7 +75,8 @@ func (c *Cache[K, V]) Keys() []K {
 	defer c.mu.RUnlock()
 	keys := make([]K, 0, len(c.items))
 	for ent := c.list.Back(); ent != nil; ent = ent.Prev() {
-		keys = append(keys, ent.Value.(*cache.Item[K, V]).Key)
+		item := ent.Value.(*cache.Item[K, V])
+		keys = append(keys, item.Key)
 	}
 	return keys
 }
@@ -100,8 +101,12 @@ func (c *Cache[K, V]) Delete(key K) {
 func (c *Cache[K, V]) Contains(key K) bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	_, ok := c.items[key]
-	return ok
+	e, ok := c.items[key]
+	if !ok {
+		return false
+	}
+	item := e.Value.(*cache.Item[K, V])
+	return !item.HasExpired()
 }
 
 func (c *Cache[K, V]) deleteOldest() {
