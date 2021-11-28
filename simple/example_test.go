@@ -2,7 +2,6 @@ package simple_test
 
 import (
 	"fmt"
-	"sort"
 	"time"
 
 	cache "github.com/Code-Hex/go-generics-cache"
@@ -19,24 +18,29 @@ func ExampleCache() {
 	fmt.Println(av, aok)
 	fmt.Println(bv, bok)
 	fmt.Println(cv, cok)
+	c.Delete("a")
+	_, aok2 := c.Get("a")
+	if !aok2 {
+		fmt.Println("key 'a' has been deleted")
+	}
 	// Output:
 	// 1 true
 	// 2 true
 	// 0 false
+	// key 'a' has been deleted
 }
 
 func ExampleCacheKeys() {
 	c := simple.NewCache[string, int]()
-	c.Set("a", 1)
-	c.Set("b", 2)
-	c.Set("c", 3)
+	c.Set("foo", 1)
+	c.Set("bar", 2)
+	c.Set("baz", 3)
 	keys := c.Keys()
-	sort.Strings(keys)
 	for _, key := range keys {
 		fmt.Println(key)
 	}
 	// Output:
-	// a
-	// b
-	// c
+	// foo
+	// bar
+	// baz
 }

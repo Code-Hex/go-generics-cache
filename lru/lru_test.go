@@ -62,5 +62,4 @@ func TestDelete(t *testing.T) {
 	if _, ok := cache.Get("foo"); ok {
 		t.Fatalf("invalid get after deleted %v", ok)
 	}
-
 }

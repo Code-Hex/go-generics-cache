@@ -9,6 +9,9 @@ import (
 type Cache[K comparable, V any] interface {
 	Get(key K) (value V, ok bool)
 	Set(key K, val V, opts ...ItemOption)
+	Keys() []K
+	Delete(key K)
+	Contains(key K) bool
 }
 
 // Item is an item
