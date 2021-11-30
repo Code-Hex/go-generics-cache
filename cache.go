@@ -16,10 +16,17 @@ type Cache[K comparable, V any] interface {
 
 // Item is an item
 type Item[K comparable, V any] struct {
-	Key        K
-	Value      V
-	Expiration time.Duration
-	CreatedAt  time.Time
+	Key            K
+	Value          V
+	ReferenceCount int
+	Expiration     time.Duration
+	CreatedAt      time.Time
+	ReferencedAt   time.Time
+}
+
+func (i *Item[K, V]) Referenced() {
+	i.ReferenceCount++
+	i.ReferencedAt = nowFunc()
 }
 
 var nowFunc = time.Now
@@ -53,11 +60,14 @@ func NewItem[K comparable, V any](key K, val V, opts ...ItemOption) *Item[K, V] 
 	for _, optFunc := range opts {
 		optFunc(o)
 	}
+	now := nowFunc()
 	return &Item[K, V]{
-		Key:        key,
-		Value:      val,
-		Expiration: o.expiration,
-		CreatedAt:  nowFunc(),
+		Key:            key,
+		Value:          val,
+		ReferenceCount: 1,
+		Expiration:     o.expiration,
+		CreatedAt:      now,
+		ReferencedAt:   now,
 	}
 }
 
