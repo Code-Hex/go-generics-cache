@@ -10,6 +10,9 @@ go-generics-cache is an in-memory key:value store/cache that is suitable for app
   - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/simple/example_test.go)
 - LRU cache
   - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/lru/example_test.go)
+- LFU cache
+  - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/lfu/example_test.go)
+  - [An O(1) algorithm for implementing the LFU cache eviction scheme](http://dhruvbird.com/lfu.pdf)
 
 ## Requirements
 
