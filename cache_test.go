@@ -101,3 +101,31 @@ func TestHasExpired(t *testing.T) {
 		})
 	}
 }
+
+func TestReferenced(t *testing.T) {
+	tm := time.Now()
+	reset := cache.SetNowFunc(tm)
+
+	item := cache.NewItem("hello", "world")
+	if item.ReferenceCount != 1 {
+		t.Errorf("want ref count is 1 but got %d", item.ReferenceCount)
+	}
+	if !item.ReferencedAt.Equal(tm) {
+		t.Errorf("unexpected referenced_at got %v", item.ReferencedAt)
+	}
+
+	reset()
+	// update referenced_at
+	wantReferencedAt := tm.Add(time.Hour)
+	reset = cache.SetNowFunc(wantReferencedAt)
+	defer reset()
+
+	item.Referenced()
+
+	if item.ReferenceCount != 2 {
+		t.Errorf("want ref count is 2 but got %d", item.ReferenceCount)
+	}
+	if !item.ReferencedAt.Equal(wantReferencedAt) {
+		t.Errorf("unexpected referenced_at got %v", item.ReferencedAt)
+	}
+}
