@@ -24,6 +24,8 @@ type Item[K comparable, V any] struct {
 	ReferencedAt   time.Time
 }
 
+// Referenced increments a reference counter and updates `ReferencedAt`
+// to current time.
 func (i *Item[K, V]) Referenced() {
 	i.ReferenceCount++
 	i.ReferencedAt = nowFunc()
