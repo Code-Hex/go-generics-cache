@@ -43,6 +43,7 @@ func (c *Cache[K, V]) Get(k K) (val V, ok bool) {
 	if got.HasExpired() {
 		return
 	}
+	got.Referenced()
 	return got.Value, true
 }
 

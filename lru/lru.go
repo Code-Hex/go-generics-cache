@@ -43,6 +43,7 @@ func (c *Cache[K, V]) Get(key K) (zero V, _ bool) {
 	if item.HasExpired() {
 		return
 	}
+	item.Referenced()
 	// updates cache order
 	c.list.MoveToFront(e)
 	return item.Value, true
@@ -56,7 +57,9 @@ func (c *Cache[K, V]) Set(key K, val V, opts ...cache.ItemOption) {
 	if e, ok := c.items[key]; ok {
 		// updates cache order
 		c.list.MoveToFront(e)
-		e.Value.(*cache.Item[K, V]).Value = val
+		item := e.Value.(*cache.Item[K, V])
+		item.Value = val
+		item.Referenced()
 		return
 	}
 
