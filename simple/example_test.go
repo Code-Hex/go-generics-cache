@@ -23,11 +23,16 @@ func ExampleCache() {
 	if !aok2 {
 		fmt.Println("key 'a' has been deleted")
 	}
+	// update
+	c.Set("b", 3)
+	newbv, _ := c.Get("b")
+	fmt.Println(newbv)
 	// Output:
 	// 1 true
 	// 2 true
 	// 0 false
 	// key 'a' has been deleted
+	// 3
 }
 
 func ExampleCacheKeys() {

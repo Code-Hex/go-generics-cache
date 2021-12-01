@@ -26,8 +26,13 @@ func NewCache[K comparable, V any]() *Cache[K, V] {
 // The default item never expires.
 func (c *Cache[K, V]) Set(k K, v V, opts ...cache.ItemOption) {
 	c.mu.Lock()
+	defer c.mu.Unlock()
+	if item, ok := c.items[k]; ok {
+		item.Value = v
+		item.Referenced()
+		return
+	}
 	c.items[k] = cache.NewItem(k, v, opts...)
-	c.mu.Unlock()
 }
 
 // Get gets an item from the cache.
@@ -43,6 +48,7 @@ func (c *Cache[K, V]) Get(k K) (val V, ok bool) {
 	if got.HasExpired() {
 		return
 	}
+	got.Referenced()
 	return got.Value, true
 }
 
