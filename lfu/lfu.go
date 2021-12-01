@@ -58,14 +58,14 @@ func (c *Cache[K, V]) Set(key K, val V, opts ...cache.ItemOption) {
 		return
 	}
 
-	e := newEntry(key, val, opts...)
-	heap.Push(c.queue, e)
-	c.items[key] = e
-
-	if len(c.items) > c.cap {
+	if len(c.items) == c.cap {
 		evictedEntry := heap.Pop(c.queue).(*entry[K, V])
 		delete(c.items, evictedEntry.item.Key)
 	}
+
+	e := newEntry(key, val, opts...)
+	heap.Push(c.queue, e)
+	c.items[key] = e
 }
 
 // Keys returns the keys of the cache. the order is from oldest to newest.
@@ -98,4 +98,11 @@ func (c *Cache[K, V]) Contains(key K) bool {
 		return false
 	}
 	return !e.item.HasExpired()
+}
+
+// Len returns the number of items in the cache.
+func (c *Cache[K, V]) Len() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.queue.Len()
 }
