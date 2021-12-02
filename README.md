@@ -48,11 +48,11 @@ import (
 
 func main() {
 	// Create a simple cache. key as string, value as int.
-	simpleCache := simple.NewCache[string, int](simple.WithExpiration(time.Hour))
+	simpleCache := simple.NewCache[string, int]()
 
 	// Create a cache for Number constraint. key as string, value as int.
 	nc := cache.NewNumber[string, int](simpleCache)
-	nc.Set("age", 26)
+	nc.Set("age", 26, cache.WithExpiration(time.Hour))
 
 	// This will be compile error, because string is not satisfied cache.Number constraint.
 	// nc := cache.NewNumber[string, string](simpleCache)
