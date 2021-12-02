@@ -4,8 +4,6 @@ import (
 	"sort"
 	"sync"
 	"time"
-
-	cache "github.com/Code-Hex/go-generics-cache"
 )
 
 // Cache is a simple cache has no clear priority for evict cache.
@@ -18,8 +16,6 @@ type entry[V any] struct {
 	val       V
 	createdAt time.Time
 }
-
-var _ cache.Interface[interface{}, any] = (*Cache[interface{}, any])(nil)
 
 // NewCache creates a new cache.
 func NewCache[K comparable, V any]() *Cache[K, V] {

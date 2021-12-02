@@ -3,8 +3,6 @@ package lfu
 import (
 	"container/heap"
 	"time"
-
-	cache "github.com/Code-Hex/go-generics-cache"
 )
 
 type entry[K comparable, V any] struct {
@@ -15,7 +13,7 @@ type entry[K comparable, V any] struct {
 	referencedAt   time.Time
 }
 
-func newEntry[K comparable, V any](key K, val V, opts ...cache.ItemOption) *entry[K, V] {
+func newEntry[K comparable, V any](key K, val V) *entry[K, V] {
 	return &entry[K, V]{
 		index:          0,
 		key:            key,
