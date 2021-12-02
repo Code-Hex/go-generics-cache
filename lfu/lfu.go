@@ -15,7 +15,7 @@ type Cache[K comparable, V any] struct {
 	mu    sync.RWMutex
 }
 
-var _ cache.Cache[interface{}, any] = (*Cache[interface{}, any])(nil)
+var _ cache.Interface[interface{}, any] = (*Cache[interface{}, any])(nil)
 
 // NewCache creates a new LFU cache whose capacity is the default size (128).
 func NewCache[K comparable, V any]() *Cache[K, V] {
@@ -40,16 +40,13 @@ func (c *Cache[K, V]) Get(key K) (zero V, _ bool) {
 	if !ok {
 		return
 	}
-	if e.item.HasExpired() {
-		return
-	}
-	e.item.Referenced()
+	e.referenced()
 	heap.Fix(c.queue, e.index)
-	return e.item.Value, true
+	return e.val, true
 }
 
 // Set sets a value to the cache with key. replacing any existing value.
-func (c *Cache[K, V]) Set(key K, val V, opts ...cache.ItemOption) {
+func (c *Cache[K, V]) Set(key K, val V) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -60,10 +57,10 @@ func (c *Cache[K, V]) Set(key K, val V, opts ...cache.ItemOption) {
 
 	if len(c.items) == c.cap {
 		evictedEntry := heap.Pop(c.queue).(*entry[K, V])
-		delete(c.items, evictedEntry.item.Key)
+		delete(c.items, evictedEntry.key)
 	}
 
-	e := newEntry(key, val, opts...)
+	e := newEntry(key, val)
 	heap.Push(c.queue, e)
 	c.items[key] = e
 }
@@ -74,7 +71,7 @@ func (c *Cache[K, V]) Keys() []K {
 	defer c.mu.RUnlock()
 	keys := make([]K, 0, len(c.items))
 	for _, entry := range *c.queue {
-		keys = append(keys, entry.item.Key)
+		keys = append(keys, entry.key)
 	}
 	return keys
 }
@@ -87,17 +84,6 @@ func (c *Cache[K, V]) Delete(key K) {
 		heap.Remove(c.queue, e.index)
 		delete(c.items, key)
 	}
-}
-
-// Contains reports whether key is within cache.
-func (c *Cache[K, V]) Contains(key K) bool {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	e, ok := c.items[key]
-	if !ok {
-		return false
-	}
-	return !e.item.HasExpired()
 }
 
 // Len returns the number of items in the cache.

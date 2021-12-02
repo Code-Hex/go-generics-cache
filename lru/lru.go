@@ -15,7 +15,12 @@ type Cache[K comparable, V any] struct {
 	mu    sync.RWMutex
 }
 
-var _ cache.Cache[interface{}, any] = (*Cache[interface{}, any])(nil)
+type entry[K comparable, V any] struct {
+	key K
+	val V
+}
+
+var _ cache.Interface[interface{}, any] = (*Cache[interface{}, any])(nil)
 
 // NewCache creates a new LRU cache whose capacity is the default size (128).
 func NewCache[K comparable, V any]() *Cache[K, V] {
@@ -39,32 +44,29 @@ func (c *Cache[K, V]) Get(key K) (zero V, _ bool) {
 	if !ok {
 		return
 	}
-	item := e.Value.(*cache.Item[K, V])
-	if item.HasExpired() {
-		return
-	}
-	item.Referenced()
 	// updates cache order
 	c.list.MoveToFront(e)
-	return item.Value, true
+	return e.Value.(*entry[K, V]).val, true
 }
 
 // Set sets a value to the cache with key. replacing any existing value.
-func (c *Cache[K, V]) Set(key K, val V, opts ...cache.ItemOption) {
+func (c *Cache[K, V]) Set(key K, val V) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	if e, ok := c.items[key]; ok {
 		// updates cache order
 		c.list.MoveToFront(e)
-		item := e.Value.(*cache.Item[K, V])
-		item.Value = val
-		item.Referenced()
+		entry := e.Value.(*entry[K, V])
+		entry.val = val
 		return
 	}
 
-	item := cache.NewItem(key, val, opts...)
-	e := c.list.PushFront(item)
+	newEntry := &entry[K, V]{
+		key: key,
+		val: val,
+	}
+	e := c.list.PushFront(newEntry)
 	c.items[key] = e
 
 	if c.list.Len() > c.cap {
@@ -78,8 +80,8 @@ func (c *Cache[K, V]) Keys() []K {
 	defer c.mu.RUnlock()
 	keys := make([]K, 0, len(c.items))
 	for ent := c.list.Back(); ent != nil; ent = ent.Prev() {
-		item := ent.Value.(*cache.Item[K, V])
-		keys = append(keys, item.Key)
+		entry := ent.Value.(*entry[K, V])
+		keys = append(keys, entry.key)
 	}
 	return keys
 }
@@ -100,18 +102,6 @@ func (c *Cache[K, V]) Delete(key K) {
 	}
 }
 
-// Contains reports whether key is within cache.
-func (c *Cache[K, V]) Contains(key K) bool {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	e, ok := c.items[key]
-	if !ok {
-		return false
-	}
-	item := e.Value.(*cache.Item[K, V])
-	return !item.HasExpired()
-}
-
 func (c *Cache[K, V]) deleteOldest() {
 	e := c.list.Back()
 	c.delete(e)
@@ -119,6 +109,6 @@ func (c *Cache[K, V]) deleteOldest() {
 
 func (c *Cache[K, V]) delete(e *list.Element) {
 	c.list.Remove(e)
-	item := e.Value.(*cache.Item[K, V])
-	delete(c.items, item.Key)
+	entry := e.Value.(*entry[K, V])
+	delete(c.items, entry.key)
 }

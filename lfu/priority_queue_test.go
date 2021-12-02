@@ -27,10 +27,10 @@ func TestPriorityQueue(t *testing.T) {
 		if entry.index != idx {
 			t.Errorf("want index %d, but got %d", entry.index, idx)
 		}
-		if entry.item.ReferenceCount != 1 {
+		if entry.referenceCount != 1 {
 			t.Errorf("want count 1")
 		}
-		if got := entry.item.Value; nums[idx] != got {
+		if got := entry.val; nums[idx] != got {
 			t.Errorf("want value %d but got %d", nums[idx], got)
 		}
 	}
@@ -53,8 +53,8 @@ func TestPriorityQueue(t *testing.T) {
 	if got.index != -1 {
 		t.Errorf("want index -1, but got %d", got.index)
 	}
-	if wantValue != got.item.Value {
-		t.Errorf("want the lowest priority value is %d, but got %d", wantValue, got.item.Value)
+	if wantValue != got.val {
+		t.Errorf("want the lowest priority value is %d, but got %d", wantValue, got.val)
 	}
 	if want, got := len(nums)-1, queue.Len(); want != got {
 		t.Errorf("want %d, but got %d", want, got)
@@ -66,8 +66,8 @@ func TestPriorityQueue(t *testing.T) {
 	if got.index != -1 {
 		t.Errorf("want index -1, but got %d", got.index)
 	}
-	if wantValue2 != got2.item.Value {
-		t.Errorf("want the lowest priority value is %d, but got %d", wantValue2, got2.item.Value)
+	if wantValue2 != got2.val {
+		t.Errorf("want the lowest priority value is %d, but got %d", wantValue2, got2.val)
 	}
 	if want, got := len(nums)-2, queue.Len(); want != got {
 		t.Errorf("want %d, but got %d", want, got)

@@ -2,15 +2,13 @@ package simple_test
 
 import (
 	"fmt"
-	"time"
 
-	cache "github.com/Code-Hex/go-generics-cache"
 	"github.com/Code-Hex/go-generics-cache/simple"
 )
 
 func ExampleCache() {
 	c := simple.NewCache[string, int]()
-	c.Set("a", 1, cache.WithExpiration(time.Hour))
+	c.Set("a", 1)
 	c.Set("b", 2)
 	av, aok := c.Get("a")
 	bv, bok := c.Get("b")
