@@ -2,14 +2,12 @@ package simple
 
 import (
 	"sort"
-	"sync"
 	"time"
 )
 
 // Cache is a simple cache has no clear priority for evict cache.
 type Cache[K comparable, V any] struct {
 	items map[K]*entry[V]
-	mu    sync.RWMutex
 }
 
 type entry[V any] struct {
@@ -27,8 +25,6 @@ func NewCache[K comparable, V any]() *Cache[K, V] {
 // Set sets any item to the cache. replacing any existing item.
 // The default item never expires.
 func (c *Cache[K, V]) Set(k K, v V) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	c.items[k] = &entry[V]{
 		val:       v,
 		createdAt: time.Now(),
@@ -38,9 +34,6 @@ func (c *Cache[K, V]) Set(k K, v V) {
 // Get gets an item from the cache.
 // Returns the item or zero value, and a bool indicating whether the key was found.
 func (c *Cache[K, V]) Get(k K) (val V, ok bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
 	got, found := c.items[k]
 	if !found {
 		return
@@ -50,9 +43,6 @@ func (c *Cache[K, V]) Get(k K) (val V, ok bool) {
 
 // Keys returns cache keys. the order is sorted by created.
 func (c *Cache[K, _]) Keys() []K {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
 	ret := make([]K, 0, len(c.items))
 	for key := range c.items {
 		ret = append(ret, key)
@@ -67,7 +57,5 @@ func (c *Cache[K, _]) Keys() []K {
 
 // Delete deletes the item with provided key from the cache.
 func (c *Cache[K, V]) Delete(key K) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	delete(c.items, key)
 }

@@ -2,7 +2,6 @@ package lfu
 
 import (
 	"container/heap"
-	"sync"
 )
 
 // Cache is a thread safe LRU cache
@@ -10,7 +9,6 @@ type Cache[K comparable, V any] struct {
 	cap   int
 	queue *priorityQueue[K, V]
 	items map[K]*entry[K, V]
-	mu    sync.RWMutex
 }
 
 // NewCache creates a new LFU cache whose capacity is the default size (128).
@@ -29,9 +27,6 @@ func NewCacheWithCap[K comparable, V any](cap int) *Cache[K, V] {
 
 // Get looks up a key's value from the cache.
 func (c *Cache[K, V]) Get(key K) (zero V, _ bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
 	e, ok := c.items[key]
 	if !ok {
 		return
@@ -43,9 +38,6 @@ func (c *Cache[K, V]) Get(key K) (zero V, _ bool) {
 
 // Set sets a value to the cache with key. replacing any existing value.
 func (c *Cache[K, V]) Set(key K, val V) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	if e, ok := c.items[key]; ok {
 		c.queue.update(e, val)
 		return
@@ -63,8 +55,6 @@ func (c *Cache[K, V]) Set(key K, val V) {
 
 // Keys returns the keys of the cache. the order is from oldest to newest.
 func (c *Cache[K, V]) Keys() []K {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
 	keys := make([]K, 0, len(c.items))
 	for _, entry := range *c.queue {
 		keys = append(keys, entry.key)
@@ -74,8 +64,6 @@ func (c *Cache[K, V]) Keys() []K {
 
 // Delete deletes the item with provided key from the cache.
 func (c *Cache[K, V]) Delete(key K) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	if e, ok := c.items[key]; ok {
 		heap.Remove(c.queue, e.index)
 		delete(c.items, key)
@@ -84,7 +72,5 @@ func (c *Cache[K, V]) Delete(key K) {
 
 // Len returns the number of items in the cache.
 func (c *Cache[K, V]) Len() int {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
 	return c.queue.Len()
 }

@@ -2,7 +2,6 @@ package lru
 
 import (
 	"container/list"
-	"sync"
 )
 
 // Cache is a thread safe LRU cache
@@ -10,7 +9,6 @@ type Cache[K comparable, V any] struct {
 	cap   int
 	list  *list.List
 	items map[K]*list.Element
-	mu    sync.RWMutex
 }
 
 type entry[K comparable, V any] struct {
@@ -34,8 +32,6 @@ func NewCacheWithCap[K comparable, V any](cap int) *Cache[K, V] {
 
 // Get looks up a key's value from the cache.
 func (c *Cache[K, V]) Get(key K) (zero V, _ bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
 	e, ok := c.items[key]
 	if !ok {
 		return
@@ -47,9 +43,6 @@ func (c *Cache[K, V]) Get(key K) (zero V, _ bool) {
 
 // Set sets a value to the cache with key. replacing any existing value.
 func (c *Cache[K, V]) Set(key K, val V) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	if e, ok := c.items[key]; ok {
 		// updates cache order
 		c.list.MoveToFront(e)
@@ -72,8 +65,6 @@ func (c *Cache[K, V]) Set(key K, val V) {
 
 // Keys returns the keys of the cache. the order is from oldest to newest.
 func (c *Cache[K, V]) Keys() []K {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
 	keys := make([]K, 0, len(c.items))
 	for ent := c.list.Back(); ent != nil; ent = ent.Prev() {
 		entry := ent.Value.(*entry[K, V])
@@ -84,15 +75,11 @@ func (c *Cache[K, V]) Keys() []K {
 
 // Len returns the number of items in the cache.
 func (c *Cache[K, V]) Len() int {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
 	return c.list.Len()
 }
 
 // Delete deletes the item with provided key from the cache.
 func (c *Cache[K, V]) Delete(key K) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	if e, ok := c.items[key]; ok {
 		c.delete(e)
 	}
