@@ -43,19 +43,20 @@ import (
 	"time"
 
 	cache "github.com/Code-Hex/go-generics-cache"
-	"github.com/Code-Hex/go-generics-cache/simple"
 )
 
 func main() {
-	// Create a simple cache. key as string, value as int.
-	simpleCache := simple.NewCache[string, int]()
+	// use simple cache algorithm without options.
+	c := cache.New[string, int]()
+	c.Set("a", 1)
+	gota, aok := c.Get("a")
+	gotb, bok := c.Get("b")
+	fmt.Println(gota, aok) // 1 true
+	fmt.Println(gotb, bok) // 0 false
 
 	// Create a cache for Number constraint. key as string, value as int.
-	nc := cache.NewNumber[string, int](simpleCache)
+	nc := cache.NewNumber[string, int]()
 	nc.Set("age", 26, cache.WithExpiration(time.Hour))
-
-	// This will be compile error, because string is not satisfied cache.Number constraint.
-	// nc := cache.NewNumber[string, string](simpleCache)
 
 	incremented := nc.Increment("age", 1)
 	fmt.Println(incremented) // 27
