@@ -2,20 +2,30 @@ package lfu
 
 import (
 	"container/heap"
-
-	cache "github.com/Code-Hex/go-generics-cache"
+	"time"
 )
 
 type entry[K comparable, V any] struct {
-	index int
-	item  *cache.Item[K, V]
+	index          int
+	key            K
+	val            V
+	referenceCount int
+	referencedAt   time.Time
 }
 
-func newEntry[K comparable, V any](key K, val V, opts ...cache.ItemOption) *entry[K, V] {
+func newEntry[K comparable, V any](key K, val V) *entry[K, V] {
 	return &entry[K, V]{
-		index: 0,
-		item:  cache.NewItem(key, val, opts...),
+		index:          0,
+		key:            key,
+		val:            val,
+		referenceCount: 1,
+		referencedAt:   time.Now(),
 	}
+}
+
+func (e *entry[K, V]) referenced() {
+	e.referenceCount++
+	e.referencedAt = time.Now()
 }
 
 type priorityQueue[K comparable, V any] []*entry[K, V]
@@ -31,10 +41,10 @@ var _ heap.Interface = (*priorityQueue[interface{}, interface{}])(nil)
 func (l priorityQueue[K, V]) Len() int { return len(l) }
 
 func (l priorityQueue[K, V]) Less(i, j int) bool {
-	if l[i].item.ReferenceCount == l[j].item.ReferenceCount {
-		return l[i].item.ReferencedAt.Before(l[j].item.ReferencedAt)
+	if l[i].referenceCount == l[j].referenceCount {
+		return l[i].referencedAt.Before(l[j].referencedAt)
 	}
-	return l[i].item.ReferenceCount < l[j].item.ReferenceCount
+	return l[i].referenceCount < l[j].referenceCount
 }
 
 func (l priorityQueue[K, V]) Swap(i, j int) {
@@ -60,7 +70,7 @@ func (l *priorityQueue[K, V]) Pop() interface{} {
 }
 
 func (pq *priorityQueue[K, V]) update(e *entry[K, V], val V) {
-	e.item.Value = val
-	e.item.Referenced()
+	e.val = val
+	e.referenced()
 	heap.Fix(pq, e.index)
 }
