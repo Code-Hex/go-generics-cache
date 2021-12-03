@@ -21,7 +21,7 @@ func ExampleCache() {
 }
 
 func ExampleCacheWithExpiration() {
-	c := cache.New(cache.AsLFU[string, int](128))
+	c := cache.New(cache.AsLFU[string, int]())
 	exp := 250 * time.Millisecond
 	c.Set("a", 1, cache.WithExpiration(exp))
 
@@ -46,7 +46,7 @@ func ExampleCacheWithExpiration() {
 }
 
 func ExampleDelete() {
-	c := cache.New(cache.AsLRU[string, int](128))
+	c := cache.New(cache.AsLRU[string, int]())
 	c.Set("a", 1)
 	c.Delete("a")
 	gota, aok := c.Get("a")
@@ -56,7 +56,7 @@ func ExampleDelete() {
 }
 
 func ExampleKeys() {
-	c := cache.New(cache.AsLFU[string, int](128))
+	c := cache.New(cache.AsLFU[string, int]())
 	c.Set("a", 1)
 	c.Set("b", 1)
 	c.Set("c", 1)
@@ -66,7 +66,7 @@ func ExampleKeys() {
 }
 
 func ExampleContains() {
-	c := cache.New(cache.AsLRU[string, int](128))
+	c := cache.New(cache.AsLRU[string, int]())
 	c.Set("a", 1)
 	fmt.Println(c.Contains("a"))
 	fmt.Println(c.Contains("b"))

@@ -16,17 +16,36 @@ type entry[K comparable, V any] struct {
 	val V
 }
 
-// NewCache creates a new LRU cache whose capacity is the default size (128).
-func NewCache[K comparable, V any]() *Cache[K, V] {
-	return NewCacheWithCap[K, V](128)
+// Option is an option for LFU cache.
+type Option func(*options)
+
+type options struct {
+	capacity int
 }
 
-// NewCacheWithCap creates a new LRU cache whose capacity is the specified size.
-func NewCacheWithCap[K comparable, V any](cap int) *Cache[K, V] {
+func newOptions() *options {
+	return &options{
+		capacity: 128,
+	}
+}
+
+// WithCapacity is an option to set cache capacity.
+func WithCapacity(cap int) Option {
+	return func(o *options) {
+		o.capacity = cap
+	}
+}
+
+// NewCache creates a new LRU cache whose capacity is the default size (128).
+func NewCache[K comparable, V any](opts ...Option) *Cache[K, V] {
+	o := newOptions()
+	for _, optFunc := range opts {
+		optFunc(o)
+	}
 	return &Cache[K, V]{
-		cap:   cap,
+		cap:   o.capacity,
 		list:  list.New(),
-		items: make(map[K]*list.Element, cap),
+		items: make(map[K]*list.Element, o.capacity),
 	}
 }
 

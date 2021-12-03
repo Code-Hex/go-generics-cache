@@ -82,16 +82,16 @@ func newOptions[K comparable, V any]() *options[K, V] {
 }
 
 // AsLRU is an option to make a new Cache as LRU algorithm.
-func AsLRU[K comparable, V any](cap int) Option[K, V] {
+func AsLRU[K comparable, V any](opts ...lru.Option) Option[K, V] {
 	return func(o *options[K, V]) {
-		o.cache = lru.NewCacheWithCap[K, *Item[K, V]](cap)
+		o.cache = lru.NewCache[K, *Item[K, V]](opts...)
 	}
 }
 
 // AsLFU is an option to make a new Cache as LFU algorithm.
-func AsLFU[K comparable, V any](cap int) Option[K, V] {
+func AsLFU[K comparable, V any](opts ...lfu.Option) Option[K, V] {
 	return func(o *options[K, V]) {
-		o.cache = lfu.NewCacheWithCap[K, *Item[K, V]](cap)
+		o.cache = lfu.NewCache[K, *Item[K, V]](opts...)
 	}
 }
 
