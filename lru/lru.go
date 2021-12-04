@@ -4,7 +4,11 @@ import (
 	"container/list"
 )
 
-// Cache is a thread safe LRU cache
+// Cache is used a LRU (Least recently used) cache replacement policy.
+//
+// Discards the least recently used items first. This algorithm requires
+// keeping track of what was used when, which is expensive if one wants
+// to make sure the algorithm always discards the least recently used item.
 type Cache[K comparable, V any] struct {
 	cap   int
 	list  *list.List
@@ -36,7 +40,7 @@ func WithCapacity(cap int) Option {
 	}
 }
 
-// NewCache creates a new LRU cache whose capacity is the default size (128).
+// NewCache creates a new non-thread safe LRU cache whose capacity is the default size (128).
 func NewCache[K comparable, V any](opts ...Option) *Cache[K, V] {
 	o := newOptions()
 	for _, optFunc := range opts {

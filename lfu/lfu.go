@@ -4,7 +4,12 @@ import (
 	"container/heap"
 )
 
-// Cache is a thread safe LRU cache
+// Cache is used a LFU (Least-frequently used) cache replacement policy.
+//
+// Counts how often an item is needed. Those that are used least often are discarded first.
+// This works very similar to LRU except that instead of storing the value of how recently
+// a block was accessed, we store the value of how many times it was accessed. So of course
+// while running an access sequence we will replace a block which was used fewest times from our cache.
 type Cache[K comparable, V any] struct {
 	cap   int
 	queue *priorityQueue[K, V]
@@ -31,7 +36,7 @@ func WithCapacity(cap int) Option {
 	}
 }
 
-// NewCache creates a new LFU cache whose capacity is the default size (128).
+// NewCache creates a new non-thread safe LFU cache whose capacity is the default size (128).
 func NewCache[K comparable, V any](opts ...Option) *Cache[K, V] {
 	o := newOptions()
 	for _, optFunc := range opts {

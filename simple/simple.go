@@ -15,7 +15,7 @@ type entry[V any] struct {
 	createdAt time.Time
 }
 
-// NewCache creates a new cache.
+// NewCache creates a new non-thread safe cache.
 func NewCache[K comparable, V any]() *Cache[K, V] {
 	return &Cache[K, V]{
 		items: make(map[K]*entry[V], 0),

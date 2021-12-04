@@ -62,7 +62,7 @@ func newItem[K comparable, V any](key K, val V, opts ...ItemOption) *Item[K, V] 
 	}
 }
 
-// Cache is a cache.
+// Cache is a thread safe cache.
 type Cache[K comparable, V any] struct {
 	cache       Interface[K, *Item[K, V]]
 	expirations map[K]chan struct{}
@@ -104,7 +104,9 @@ func AsFIFO[K comparable, V any](opts ...fifo.Option) Option[K, V] {
 	}
 }
 
-// New creates a new Cache.
+// New creates a new thread safe Cache.
+//
+// There are several Cache replacement policies available with you specified any options.
 func New[K comparable, V any](opts ...Option[K, V]) *Cache[K, V] {
 	o := newOptions[K, V]()
 	for _, optFunc := range opts {
