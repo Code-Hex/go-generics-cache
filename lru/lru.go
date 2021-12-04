@@ -20,7 +20,7 @@ type entry[K comparable, V any] struct {
 	val V
 }
 
-// Option is an option for LFU cache.
+// Option is an option for LRU cache.
 type Option func(*options)
 
 type options struct {
