@@ -21,6 +21,9 @@ go-generics-cache is an in-memory key:value store/cache that is suitable for app
     - Using this algorithm the cache behaves in the same way as a [FIFO queue](https://en.wikipedia.org/wiki/FIFO_(computing_and_electronics)).
     - The cache evicts the blocks in the order they were added, without any regard to how often or how many times they were accessed before.
 	- See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/fifo/example_test.go)
+  - Most recently used (MRU)
+    - In contrast to Least Recently Used (LRU), MRU discards the most recently used items first.
+	- See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/mru/example_test.go)
 
 ## Requirements
 
