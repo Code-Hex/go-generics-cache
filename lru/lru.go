@@ -40,7 +40,7 @@ func WithCapacity(cap int) Option {
 	}
 }
 
-// NewCache creates a new LRU cache whose capacity is the default size (128).
+// NewCache creates a new non-thread safe LRU cache whose capacity is the default size (128).
 func NewCache[K comparable, V any](opts ...Option) *Cache[K, V] {
 	o := newOptions()
 	for _, optFunc := range opts {
