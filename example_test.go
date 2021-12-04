@@ -21,7 +21,7 @@ func ExampleCache() {
 }
 
 func ExampleCacheWithExpiration() {
-	c := cache.New(cache.AsLFU[string, int]())
+	c := cache.New(cache.AsFIFO[string, int]())
 	exp := 250 * time.Millisecond
 	c.Set("a", 1, cache.WithExpiration(exp))
 
