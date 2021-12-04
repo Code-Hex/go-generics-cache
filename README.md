@@ -6,13 +6,21 @@ go-generics-cache is an in-memory key:value store/cache that is suitable for app
 
 - a thread-safe
 - implemented with [Go Generics](https://go.dev/blog/generics-proposal)
-- Simple cache is like `map[string]interface{}` with expiration times
+- TTL supported (with expiration times)
+- Simple cache is like `map[string]interface{}`
   - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/simple/example_test.go)
-- LRU cache
-  - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/lru/example_test.go)
-- LFU cache
-  - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/lfu/example_test.go)
-  - [An O(1) algorithm for implementing the LFU cache eviction scheme](http://dhruvbird.com/lfu.pdf)
+- Cache replacement policies
+  - Least recently used (LRU)
+    - Discards the least recently used items first.
+    - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/lru/example_test.go)
+  - Least-frequently used (LFU)
+    - Counts how often an item is needed. Those that are used least often are discarded first.
+    - [An O(1) algorithm for implementing the LFU cache eviction scheme](http://dhruvbird.com/lfu.pdf)
+    - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/lfu/example_test.go)
+  - First in first out (FIFO)
+    - Using this algorithm the cache behaves in the same way as a [FIFO queue](https://en.wikipedia.org/wiki/FIFO_(computing_and_electronics)).
+    - The cache evicts the blocks in the order they were added, without any regard to how often or how many times they were accessed before.
+	- See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/fifo/example_test.go)
 
 ## Requirements
 
