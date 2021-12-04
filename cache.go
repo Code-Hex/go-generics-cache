@@ -7,6 +7,7 @@ import (
 	"github.com/Code-Hex/go-generics-cache/fifo"
 	"github.com/Code-Hex/go-generics-cache/lfu"
 	"github.com/Code-Hex/go-generics-cache/lru"
+	"github.com/Code-Hex/go-generics-cache/mru"
 	"github.com/Code-Hex/go-generics-cache/simple"
 )
 
@@ -23,6 +24,7 @@ var (
 	_ Interface[any, any] = (*lru.Cache[any, any])(nil)
 	_ Interface[any, any] = (*lfu.Cache[any, any])(nil)
 	_ Interface[any, any] = (*fifo.Cache[any, any])(nil)
+	_ Interface[any, any] = (*mru.Cache[any, any])(nil)
 )
 
 // Item is an item
@@ -101,6 +103,13 @@ func AsLFU[K comparable, V any](opts ...lfu.Option) Option[K, V] {
 func AsFIFO[K comparable, V any](opts ...fifo.Option) Option[K, V] {
 	return func(o *options[K, V]) {
 		o.cache = fifo.NewCache[K, *Item[K, V]](opts...)
+	}
+}
+
+// AsMRU is an option to make a new Cache as MRU algorithm.
+func AsMRU[K comparable, V any](opts ...mru.Option) Option[K, V] {
+	return func(o *options[K, V]) {
+		o.cache = mru.NewCache[K, *Item[K, V]](opts...)
 	}
 }
 

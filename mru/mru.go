@@ -1,14 +1,12 @@
-package lru
+package mru
 
 import (
 	"container/list"
 )
 
-// Cache is used a LRU (Least recently used) cache replacement policy.
+// Cache is used a MRU (Most recently used) cache replacement policy.
 //
-// Discards the least recently used items first. This algorithm requires
-// keeping track of what was used when, which is expensive if one wants
-// to make sure the algorithm always discards the least recently used item.
+// In contrast to Least Recently Used (LRU), MRU discards the most recently used items first.
 type Cache[K comparable, V any] struct {
 	cap   int
 	list  *list.List
@@ -20,7 +18,7 @@ type entry[K comparable, V any] struct {
 	val V
 }
 
-// Option is an option for LRU cache.
+// Option is an option for MRU cache.
 type Option func(*options)
 
 type options struct {
@@ -40,7 +38,7 @@ func WithCapacity(cap int) Option {
 	}
 }
 
-// NewCache creates a new non-thread safe LRU cache whose capacity is the default size (128).
+// NewCache creates a new non-thread safe MRU cache whose capacity is the default size (128).
 func NewCache[K comparable, V any](opts ...Option) *Cache[K, V] {
 	o := newOptions()
 	for _, optFunc := range opts {
@@ -60,7 +58,7 @@ func (c *Cache[K, V]) Get(key K) (zero V, _ bool) {
 		return
 	}
 	// updates cache order
-	c.list.MoveToFront(e)
+	c.list.MoveToBack(e)
 	return e.Value.(*entry[K, V]).val, true
 }
 
@@ -68,25 +66,25 @@ func (c *Cache[K, V]) Get(key K) (zero V, _ bool) {
 func (c *Cache[K, V]) Set(key K, val V) {
 	if e, ok := c.items[key]; ok {
 		// updates cache order
-		c.list.MoveToFront(e)
+		c.list.MoveToBack(e)
 		entry := e.Value.(*entry[K, V])
 		entry.val = val
 		return
+	}
+
+	if c.list.Len() == c.cap {
+		c.deleteNewest()
 	}
 
 	newEntry := &entry[K, V]{
 		key: key,
 		val: val,
 	}
-	e := c.list.PushFront(newEntry)
+	e := c.list.PushBack(newEntry)
 	c.items[key] = e
-
-	if c.list.Len() > c.cap {
-		c.deleteOldest()
-	}
 }
 
-// Keys returns the keys of the cache. the order is from oldest to newest.
+// Keys returns the keys of the cache. the order is from recently used.
 func (c *Cache[K, V]) Keys() []K {
 	keys := make([]K, 0, len(c.items))
 	for ent := c.list.Back(); ent != nil; ent = ent.Prev() {
@@ -108,8 +106,8 @@ func (c *Cache[K, V]) Delete(key K) {
 	}
 }
 
-func (c *Cache[K, V]) deleteOldest() {
-	e := c.list.Back()
+func (c *Cache[K, V]) deleteNewest() {
+	e := c.list.Front()
 	c.delete(e)
 }
 

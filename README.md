@@ -10,17 +10,20 @@ go-generics-cache is an in-memory key:value store/cache that is suitable for app
 - Simple cache is like `map[string]interface{}`
   - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/simple/example_test.go)
 - Cache replacement policies
-  - Least recently used (LRU)
+  - **Least recently used (LRU)**
     - Discards the least recently used items first.
     - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/lru/example_test.go)
-  - Least-frequently used (LFU)
+  - **Least-frequently used (LFU)**
     - Counts how often an item is needed. Those that are used least often are discarded first.
     - [An O(1) algorithm for implementing the LFU cache eviction scheme](http://dhruvbird.com/lfu.pdf)
     - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/lfu/example_test.go)
-  - First in first out (FIFO)
+  - **First in first out (FIFO)**
     - Using this algorithm the cache behaves in the same way as a [FIFO queue](https://en.wikipedia.org/wiki/FIFO_(computing_and_electronics)).
     - The cache evicts the blocks in the order they were added, without any regard to how often or how many times they were accessed before.
 	- See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/fifo/example_test.go)
+  - **Most recently used (MRU)**
+    - In contrast to Least Recently Used (LRU), MRU discards the most recently used items first.
+	- See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/mru/example_test.go)
 
 ## Requirements
 
@@ -41,7 +44,7 @@ go version devel go1.18-c2397905e0 Sat Nov 13 03:33:55 2021 +0000 darwin/arm64
 
 ## Usage
 
-See also [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/example_test.go)
+See also [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/example_test.go) or [gotipplay playground](https://gotipplay.golang.org/p/MRF_I4oUS_W)
 
 ```go
 package main

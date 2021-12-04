@@ -46,7 +46,7 @@ func ExampleCacheWithExpiration() {
 }
 
 func ExampleDelete() {
-	c := cache.New(cache.AsLRU[string, int]())
+	c := cache.New(cache.AsMRU[string, int]())
 	c.Set("a", 1)
 	c.Delete("a")
 	gota, aok := c.Get("a")
