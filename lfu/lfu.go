@@ -4,7 +4,12 @@ import (
 	"container/heap"
 )
 
-// Cache is a thread safe LRU cache
+// Cache is used a LFU (Least-frequently used) cache replacement policy.
+//
+// Counts how often an item is needed. Those that are used least often are discarded first.
+// This works very similar to LRU except that instead of storing the value of how recently
+// a block was accessed, we store the value of how many times it was accessed. So of course
+// while running an access sequence we will replace a block which was used fewest times from our cache.
 type Cache[K comparable, V any] struct {
 	cap   int
 	queue *priorityQueue[K, V]

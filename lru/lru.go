@@ -4,7 +4,11 @@ import (
 	"container/list"
 )
 
-// Cache is a thread safe LRU cache
+// Cache is used a LRU (Least recently used) cache replacement policy.
+//
+// Discards the least recently used items first. This algorithm requires
+// keeping track of what was used when, which is expensive if one wants
+// to make sure the algorithm always discards the least recently used item.
 type Cache[K comparable, V any] struct {
 	cap   int
 	list  *list.List

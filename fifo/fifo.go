@@ -5,6 +5,7 @@ import (
 )
 
 // Cache is used a FIFO (First in first out) cache replacement policy.
+//
 // In FIFO the item that enter the cache first is evicted first
 // w/o any regard of how often or how many times it was accessed before.
 type Cache[K comparable, V any] struct {
@@ -38,7 +39,7 @@ func WithCapacity(cap int) Option {
 	}
 }
 
-// NewCache creates a new cache.
+// NewCache creates a new FIFO cache whose capacity is the default size (128).
 func NewCache[K comparable, V any](opts ...Option) *Cache[K, V] {
 	o := newOptions()
 	for _, optFunc := range opts {
