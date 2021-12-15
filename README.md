@@ -24,6 +24,9 @@ go-generics-cache is an in-memory key:value store/cache that is suitable for app
   - **Most recently used (MRU)**
     - In contrast to Least Recently Used (LRU), MRU discards the most recently used items first.
 	- See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/mru/example_test.go)
+  - **Clock**
+    - Clock is a more efficient version of FIFO than Second-chance cache algorithm.
+	- See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/clock/example_test.go)
 
 ## Requirements
 

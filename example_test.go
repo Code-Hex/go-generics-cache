@@ -20,6 +20,19 @@ func ExampleCache() {
 	// 0 false
 }
 
+func ExampleCacheAsClock() {
+	// use clock cache algorithm.
+	c := cache.New(cache.AsClock[string, int]())
+	c.Set("a", 1)
+	gota, aok := c.Get("a")
+	gotb, bok := c.Get("b")
+	fmt.Println(gota, aok)
+	fmt.Println(gotb, bok)
+	// Output:
+	// 1 true
+	// 0 false
+}
+
 func ExampleCacheWithExpiration() {
 	c := cache.New(cache.AsFIFO[string, int]())
 	exp := 250 * time.Millisecond

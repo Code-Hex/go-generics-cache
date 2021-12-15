@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Code-Hex/go-generics-cache/clock"
 	"github.com/Code-Hex/go-generics-cache/fifo"
 	"github.com/Code-Hex/go-generics-cache/lfu"
 	"github.com/Code-Hex/go-generics-cache/lru"
@@ -25,6 +26,7 @@ var (
 	_ Interface[any, any] = (*lfu.Cache[any, any])(nil)
 	_ Interface[any, any] = (*fifo.Cache[any, any])(nil)
 	_ Interface[any, any] = (*mru.Cache[any, any])(nil)
+	_ Interface[any, any] = (*clock.Cache[any, any])(nil)
 )
 
 // Item is an item
@@ -110,6 +112,13 @@ func AsFIFO[K comparable, V any](opts ...fifo.Option) Option[K, V] {
 func AsMRU[K comparable, V any](opts ...mru.Option) Option[K, V] {
 	return func(o *options[K, V]) {
 		o.cache = mru.NewCache[K, *Item[K, V]](opts...)
+	}
+}
+
+// AsClock is an option to make a new Cache as clock algorithm.
+func AsClock[K comparable, V any](opts ...clock.Option) Option[K, V] {
+	return func(o *options[K, V]) {
+		o.cache = clock.NewCache[K, *Item[K, V]](opts...)
 	}
 }
 
