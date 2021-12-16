@@ -1,13 +1,13 @@
-package clock_test
+package simple_test
 
 import (
 	"fmt"
 
-	"github.com/Code-Hex/go-generics-cache/clock"
+	"github.com/Code-Hex/go-generics-cache/policy/simple"
 )
 
-func ExampleCache() {
-	c := clock.NewCache[string, int]()
+func ExampleNewCache() {
+	c := simple.NewCache[string, int]()
 	c.Set("a", 1)
 	c.Set("b", 2)
 	av, aok := c.Get("a")
@@ -33,8 +33,8 @@ func ExampleCache() {
 	// 3
 }
 
-func ExampleCacheKeys() {
-	c := clock.NewCache[string, int]()
+func ExampleCache_Keys() {
+	c := simple.NewCache[string, int]()
 	c.Set("foo", 1)
 	c.Set("bar", 2)
 	c.Set("baz", 3)

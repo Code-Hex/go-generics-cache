@@ -1,13 +1,13 @@
-package fifo_test
+package clock_test
 
 import (
 	"fmt"
 
-	"github.com/Code-Hex/go-generics-cache/fifo"
+	"github.com/Code-Hex/go-generics-cache/policy/clock"
 )
 
-func ExampleCache() {
-	c := fifo.NewCache[string, int]()
+func ExampleNewCache() {
+	c := clock.NewCache[string, int]()
 	c.Set("a", 1)
 	c.Set("b", 2)
 	av, aok := c.Get("a")
@@ -33,8 +33,8 @@ func ExampleCache() {
 	// 3
 }
 
-func ExampleCacheKeys() {
-	c := fifo.NewCache[string, int]()
+func ExampleCache_Keys() {
+	c := clock.NewCache[string, int]()
 	c.Set("foo", 1)
 	c.Set("bar", 2)
 	c.Set("baz", 3)

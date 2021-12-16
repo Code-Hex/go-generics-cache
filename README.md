@@ -8,25 +8,25 @@ go-generics-cache is an in-memory key:value store/cache that is suitable for app
 - implemented with [Go Generics](https://go.dev/blog/generics-proposal)
 - TTL supported (with expiration times)
 - Simple cache is like `map[string]interface{}`
-  - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/simple/example_test.go)
+  - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/policy/simple/example_test.go)
 - Cache replacement policies
   - **Least recently used (LRU)**
     - Discards the least recently used items first.
-    - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/lru/example_test.go)
+    - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/policy/lru/example_test.go)
   - **Least-frequently used (LFU)**
     - Counts how often an item is needed. Those that are used least often are discarded first.
     - [An O(1) algorithm for implementing the LFU cache eviction scheme](http://dhruvbird.com/lfu.pdf)
-    - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/lfu/example_test.go)
+    - See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/policy/lfu/example_test.go)
   - **First in first out (FIFO)**
     - Using this algorithm the cache behaves in the same way as a [FIFO queue](https://en.wikipedia.org/wiki/FIFO_(computing_and_electronics)).
     - The cache evicts the blocks in the order they were added, without any regard to how often or how many times they were accessed before.
-	- See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/fifo/example_test.go)
+	- See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/policy/fifo/example_test.go)
   - **Most recently used (MRU)**
     - In contrast to Least Recently Used (LRU), MRU discards the most recently used items first.
-	- See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/mru/example_test.go)
+	- See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/policy/mru/example_test.go)
   - **Clock**
     - Clock is a more efficient version of FIFO than Second-chance cache algorithm.
-	- See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/clock/example_test.go)
+	- See [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/policy/clock/example_test.go)
 
 ## Requirements
 

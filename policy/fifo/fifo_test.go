@@ -1,14 +1,15 @@
-package lru_test
+package fifo_test
 
 import (
+	"strings"
 	"testing"
 
-	"github.com/Code-Hex/go-generics-cache/lru"
+	"github.com/Code-Hex/go-generics-cache/policy/fifo"
 )
 
 func TestSet(t *testing.T) {
 	// set capacity is 1
-	cache := lru.NewCache[string, int](lru.WithCapacity(1))
+	cache := fifo.NewCache[string, int](fifo.WithCapacity(1))
 	cache.Set("foo", 1)
 	if got := cache.Len(); got != 1 {
 		t.Fatalf("invalid length: %d", got)
@@ -29,7 +30,7 @@ func TestSet(t *testing.T) {
 
 	// checks deleted oldest
 	if _, ok := cache.Get("foo"); ok {
-		t.Fatalf("invalid delete oldest value foo %v", ok)
+		t.Fatalf("invalid eviction the oldest value for foo %v", ok)
 	}
 
 	// valid: if over the cap but same key
@@ -44,7 +45,7 @@ func TestSet(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	cache := lru.NewCache[string, int](lru.WithCapacity(1))
+	cache := fifo.NewCache[string, int](fifo.WithCapacity(1))
 	cache.Set("foo", 1)
 	if got := cache.Len(); got != 1 {
 		t.Fatalf("invalid length: %d", got)
@@ -61,5 +62,27 @@ func TestDelete(t *testing.T) {
 	}
 	if _, ok := cache.Get("foo"); ok {
 		t.Fatalf("invalid get after deleted %v", ok)
+	}
+}
+
+func TestKeys(t *testing.T) {
+	cache := fifo.NewCache[string, int]()
+	cache.Set("foo", 1)
+	cache.Set("bar", 2)
+	cache.Set("baz", 3)
+	cache.Set("bar", 4) // again
+	cache.Set("foo", 5) // again
+
+	got := strings.Join(cache.Keys(), ",")
+	want := strings.Join([]string{
+		"baz",
+		"bar",
+		"foo",
+	}, ",")
+	if got != want {
+		t.Errorf("want %q, but got %q", want, got)
+	}
+	if len(cache.Keys()) != cache.Len() {
+		t.Errorf("want number of keys %d, but got %d", len(cache.Keys()), cache.Len())
 	}
 }

@@ -20,7 +20,7 @@ func ExampleCache() {
 	// 0 false
 }
 
-func ExampleCacheAsClock() {
+func ExampleAsClock() {
 	// use clock cache algorithm.
 	c := cache.New(cache.AsClock[string, int]())
 	c.Set("a", 1)
@@ -33,7 +33,7 @@ func ExampleCacheAsClock() {
 	// 0 false
 }
 
-func ExampleCacheWithExpiration() {
+func ExampleWithExpiration() {
 	c := cache.New(cache.AsFIFO[string, int]())
 	exp := 250 * time.Millisecond
 	c.Set("a", 1, cache.WithExpiration(exp))
@@ -58,7 +58,7 @@ func ExampleCacheWithExpiration() {
 	// 0 false
 }
 
-func ExampleDelete() {
+func ExampleCache_Delete() {
 	c := cache.New(cache.AsMRU[string, int]())
 	c.Set("a", 1)
 	c.Delete("a")
@@ -68,7 +68,7 @@ func ExampleDelete() {
 	// 0 false
 }
 
-func ExampleKeys() {
+func ExampleCache_Keys() {
 	c := cache.New(cache.AsLFU[string, int]())
 	c.Set("a", 1)
 	c.Set("b", 1)
@@ -78,7 +78,7 @@ func ExampleKeys() {
 	// [a b c]
 }
 
-func ExampleContains() {
+func ExampleCache_Contains() {
 	c := cache.New(cache.AsLRU[string, int]())
 	c.Set("a", 1)
 	fmt.Println(c.Contains("a"))
@@ -88,7 +88,7 @@ func ExampleContains() {
 	// false
 }
 
-func ExampleNumberCache() {
+func ExampleNewNumber() {
 	nc := cache.NewNumber[string, int]()
 	nc.Set("a", 1)
 	nc.Set("b", 2, cache.WithExpiration(time.Minute))
