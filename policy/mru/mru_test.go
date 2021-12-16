@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Code-Hex/go-generics-cache/mru"
+	"github.com/Code-Hex/go-generics-cache/policy/mru"
 )
 
 func TestSet(t *testing.T) {

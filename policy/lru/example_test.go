@@ -1,13 +1,13 @@
-package mru_test
+package lru_test
 
 import (
 	"fmt"
 
-	"github.com/Code-Hex/go-generics-cache/mru"
+	"github.com/Code-Hex/go-generics-cache/policy/lru"
 )
 
-func ExampleMRUCache() {
-	c := mru.NewCache[string, int]()
+func ExampleNewCache() {
+	c := lru.NewCache[string, int]()
 	c.Set("a", 1)
 	c.Set("b", 2)
 	av, aok := c.Get("a")
@@ -22,8 +22,8 @@ func ExampleMRUCache() {
 	// 0 false
 }
 
-func ExampleCacheKeys() {
-	c := mru.NewCache[string, int]()
+func ExampleCache_Keys() {
+	c := lru.NewCache[string, int]()
 	c.Set("a", 1)
 	c.Set("b", 2)
 	c.Set("c", 3)
@@ -32,7 +32,7 @@ func ExampleCacheKeys() {
 		fmt.Println(key)
 	}
 	// Output:
-	// c
-	// b
 	// a
+	// b
+	// c
 }

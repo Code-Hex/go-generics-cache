@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Code-Hex/go-generics-cache/clock"
+	"github.com/Code-Hex/go-generics-cache/policy/clock"
 )
 
 func TestSet(t *testing.T) {

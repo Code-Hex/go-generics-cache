@@ -1,13 +1,13 @@
-package simple_test
+package fifo_test
 
 import (
 	"fmt"
 
-	"github.com/Code-Hex/go-generics-cache/simple"
+	"github.com/Code-Hex/go-generics-cache/policy/fifo"
 )
 
-func ExampleCache() {
-	c := simple.NewCache[string, int]()
+func ExampleNewCache() {
+	c := fifo.NewCache[string, int]()
 	c.Set("a", 1)
 	c.Set("b", 2)
 	av, aok := c.Get("a")
@@ -33,8 +33,8 @@ func ExampleCache() {
 	// 3
 }
 
-func ExampleCacheKeys() {
-	c := simple.NewCache[string, int]()
+func ExampleCache_Keys() {
+	c := fifo.NewCache[string, int]()
 	c.Set("foo", 1)
 	c.Set("bar", 2)
 	c.Set("baz", 3)

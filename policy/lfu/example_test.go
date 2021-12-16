@@ -1,13 +1,13 @@
-package lru_test
+package lfu_test
 
 import (
 	"fmt"
 
-	"github.com/Code-Hex/go-generics-cache/lru"
+	"github.com/Code-Hex/go-generics-cache/policy/lfu"
 )
 
-func ExampleLRUCache() {
-	c := lru.NewCache[string, int]()
+func ExampleNewCache() {
+	c := lfu.NewCache[string, int]()
 	c.Set("a", 1)
 	c.Set("b", 2)
 	av, aok := c.Get("a")
@@ -22,8 +22,8 @@ func ExampleLRUCache() {
 	// 0 false
 }
 
-func ExampleCacheKeys() {
-	c := lru.NewCache[string, int]()
+func ExampleCache_Keys() {
+	c := lfu.NewCache[string, int]()
 	c.Set("a", 1)
 	c.Set("b", 2)
 	c.Set("c", 3)
