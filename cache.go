@@ -21,12 +21,14 @@ type Interface[K comparable, V any] interface {
 }
 
 var (
-	_ Interface[any, any] = (*simple.Cache[any, any])(nil)
-	_ Interface[any, any] = (*lru.Cache[any, any])(nil)
-	_ Interface[any, any] = (*lfu.Cache[any, any])(nil)
-	_ Interface[any, any] = (*fifo.Cache[any, any])(nil)
-	_ Interface[any, any] = (*mru.Cache[any, any])(nil)
-	_ Interface[any, any] = (*clock.Cache[any, any])(nil)
+	_ = []Interface[any, any]{
+		(*simple.Cache[any, any])(nil),
+		(*lru.Cache[any, any])(nil),
+		(*lfu.Cache[any, any])(nil),
+		(*fifo.Cache[any, any])(nil),
+		(*mru.Cache[any, any])(nil),
+		(*clock.Cache[any, any])(nil),
+	}
 )
 
 // Item is an item
