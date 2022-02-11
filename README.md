@@ -47,7 +47,7 @@ go version devel go1.18-c2397905e0 Sat Nov 13 03:33:55 2021 +0000 darwin/arm64
 
 ## Usage
 
-See also [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/example_test.go) or [gotipplay playground](https://gotipplay.golang.org/p/MRF_I4oUS_W)
+See also [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/example_test.go) or [gotipplay playground](https://go.dev/play/p/MRF_I4oUS_W?v=gotip)
 
 ```go
 package main
