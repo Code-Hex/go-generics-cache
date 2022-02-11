@@ -1,6 +1,6 @@
 package cache
 
-import "constraints"
+import "golang.org/x/exp/constraints"
 
 // Number is a constraint that permits any numeric types.
 type Number interface {
