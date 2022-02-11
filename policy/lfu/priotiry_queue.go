@@ -36,7 +36,7 @@ func newPriorityQueue[K comparable, V any](cap int) *priorityQueue[K, V] {
 }
 
 // see example of priority queue: https://pkg.go.dev/container/heap
-var _ heap.Interface = (*priorityQueue[interface{}, interface{}])(nil)
+var _ heap.Interface = (*priorityQueue[struct{}, interface{}])(nil)
 
 func (l priorityQueue[K, V]) Len() int { return len(l) }
 
