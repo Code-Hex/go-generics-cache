@@ -73,7 +73,7 @@ type Cache[K comparable, V any] struct {
 	cache       Interface[K, *Item[K, V]]
 	expirations map[K]chan struct{}
 	// mu is used to do lock in some method process.
-	mu sync.RWMutex
+	mu sync.Mutex
 }
 
 // Option is an option for cache.
@@ -140,8 +140,8 @@ func New[K comparable, V any](opts ...Option[K, V]) *Cache[K, V] {
 
 // Get looks up a key's value from the cache.
 func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	item, ok := c.cache.Get(key)
 	if !ok {
 		return
@@ -187,8 +187,8 @@ func (c *Cache[K, V]) doneWatchExpiration(key K) {
 
 // Keys returns the keys of the cache. the order is relied on algorithms.
 func (c *Cache[K, V]) Keys() []K {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	return c.cache.Keys()
 }
 
@@ -201,8 +201,8 @@ func (c *Cache[K, V]) Delete(key K) {
 
 // Contains reports whether key is within cache.
 func (c *Cache[K, V]) Contains(key K) bool {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	_, ok := c.cache.Get(key)
 	return ok
 }
