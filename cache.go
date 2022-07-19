@@ -72,8 +72,8 @@ func newItem[K comparable, V any](key K, val V, opts ...ItemOption) *Item[K, V] 
 type Cache[K comparable, V any] struct {
 	cache       Interface[K, *Item[K, V]]
 	expirations map[K]chan struct{}
-	// mu is used to do lock in some method process.
-	mu sync.Mutex
+	// rwl is used to do lock in some method process.
+	rwl sync.RWMutex
 }
 
 // Option is an option for cache.
@@ -140,8 +140,8 @@ func New[K comparable, V any](opts ...Option[K, V]) *Cache[K, V] {
 
 // Get looks up a key's value from the cache.
 func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.rwl.RLock()
+	defer c.rwl.RUnlock()
 	item, ok := c.cache.Get(key)
 	if !ok {
 		return
@@ -151,8 +151,8 @@ func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
 
 // Set sets a value to the cache with key. replacing any existing value.
 func (c *Cache[K, V]) Set(key K, val V, opts ...ItemOption) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.rwl.Lock()
+	defer c.rwl.Unlock()
 	item := newItem(key, val, opts...)
 	if item.Expiration <= 0 {
 		c.cache.Set(key, item)
@@ -187,22 +187,22 @@ func (c *Cache[K, V]) doneWatchExpiration(key K) {
 
 // Keys returns the keys of the cache. the order is relied on algorithms.
 func (c *Cache[K, V]) Keys() []K {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.rwl.RLock()
+	defer c.rwl.RUnlock()
 	return c.cache.Keys()
 }
 
 // Delete deletes the item with provided key from the cache.
 func (c *Cache[K, V]) Delete(key K) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.rwl.Lock()
+	defer c.rwl.Unlock()
 	c.cache.Delete(key)
 }
 
 // Contains reports whether key is within cache.
 func (c *Cache[K, V]) Contains(key K) bool {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.rwl.RLock()
+	defer c.rwl.RUnlock()
 	_, ok := c.cache.Get(key)
 	return ok
 }
