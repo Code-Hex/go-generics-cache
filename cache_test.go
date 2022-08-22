@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"sync"
 	"testing"
+	"time"
 
 	cache "github.com/Code-Hex/go-generics-cache"
 	"github.com/Code-Hex/go-generics-cache/policy/clock"
@@ -12,6 +13,23 @@ import (
 	"github.com/Code-Hex/go-generics-cache/policy/lru"
 	"github.com/Code-Hex/go-generics-cache/policy/mru"
 )
+
+func TestExpiration(t *testing.T) {
+	nc := cache.New[string, int]()
+	nc.Set("hello", 1, cache.WithExpiration(3*time.Second))
+
+	time.Sleep(time.Second * 1)
+	result, got := nc.Get("hello")
+	if !got || result != 1 {
+		t.Errorf("no, expiration must exists")
+	}
+
+	time.Sleep(time.Second * 3)
+	result, got = nc.Get("hello")
+	if got || result == 1 {
+		t.Errorf("no, expiration must not exists")
+	}
+}
 
 func TestMultiThreadIncr(t *testing.T) {
 	nc := cache.NewNumber[string, int]()
