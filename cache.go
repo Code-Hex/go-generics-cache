@@ -91,14 +91,12 @@ type Cache[K comparable, V any] struct {
 type Option[K comparable, V any] func(*options[K, V])
 
 type options[K comparable, V any] struct {
-	ctx             context.Context
 	cache           Interface[K, *Item[K, V]]
 	janitorInterval time.Duration
 }
 
 func newOptions[K comparable, V any]() *options[K, V] {
 	return &options[K, V]{
-		ctx:             context.Background(),
 		cache:           simple.NewCache[K, *Item[K, V]](),
 		janitorInterval: time.Minute,
 	}
@@ -149,6 +147,8 @@ func WithJanitorInterval[K comparable, V any](d time.Duration) Option[K, V] {
 }
 
 // New creates a new thread safe Cache.
+// This function will be stopped an internal janitor when the cache is
+// no longer referenced anywhere.
 //
 // There are several Cache replacement policies available with you specified any options.
 func New[K comparable, V any](opts ...Option[K, V]) *Cache[K, V] {
@@ -156,18 +156,14 @@ func New[K comparable, V any](opts ...Option[K, V]) *Cache[K, V] {
 	for _, optFunc := range opts {
 		optFunc(o)
 	}
+	ctx, cancel := context.WithCancel(context.Background())
 	cache := &Cache[K, V]{
-		cache: o.cache,
+		cache:   o.cache,
+		janitor: newJanitor(ctx, o.janitorInterval),
 	}
-	if o.ctx == context.Background() {
-		ctx, cancel := context.WithCancel(o.ctx)
-		cache.janitor = newJanitor(ctx, o.janitorInterval)
-		runtime.SetFinalizer(cache, func(self *Cache[K, V]) {
-			cancel()
-		})
-	} else {
-		cache.janitor = newJanitor(o.ctx, o.janitorInterval)
-	}
+	runtime.SetFinalizer(cache, func(self *Cache[K, V]) {
+		cancel()
+	})
 	return cache
 }
 
@@ -181,7 +177,7 @@ func NewContext[K comparable, V any](ctx context.Context, opts ...Option[K, V]) 
 	}
 	return &Cache[K, V]{
 		cache:   o.cache,
-		janitor: newJanitor(o.ctx, o.janitorInterval),
+		janitor: newJanitor(ctx, o.janitorInterval),
 	}
 }
 

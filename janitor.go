@@ -36,6 +36,7 @@ func (j *janitor) run(cleanup func()) {
 			case <-ticker.C:
 				cleanup()
 			case <-j.done:
+				cleanup() // last call
 				return
 			case <-j.ctx.Done():
 				j.stop()
