@@ -1,6 +1,7 @@
 package cache_test
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -10,6 +11,23 @@ import (
 func ExampleCache() {
 	// use simple cache algorithm without options.
 	c := cache.New[string, int]()
+	c.Set("a", 1)
+	gota, aok := c.Get("a")
+	gotb, bok := c.Get("b")
+	fmt.Println(gota, aok)
+	fmt.Println(gotb, bok)
+	// Output:
+	// 1 true
+	// 0 false
+}
+
+func ExampleNewContext() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// use simple cache algorithm without options.
+	// an internal janitor will be stopped if specified the context is cancelled.
+	c := cache.NewContext(ctx, cache.WithJanitorInterval[string, int](3*time.Second))
 	c.Set("a", 1)
 	gota, aok := c.Get("a")
 	gotb, bok := c.Get("b")

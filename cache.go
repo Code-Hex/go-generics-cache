@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"runtime"
 	"sync"
 	"time"
@@ -12,15 +13,6 @@ import (
 	"github.com/Code-Hex/go-generics-cache/policy/mru"
 	"github.com/Code-Hex/go-generics-cache/policy/simple"
 )
-
-// janitor for collecting expired items and cleaning them
-// this object is inspired from
-// https://github.com/patrickmn/go-cache/blob/46f407853014144407b6c2ec7ccc76bf67958d93/cache.go
-// many thanks to go-cache project
-type janitor struct {
-	Interval time.Duration
-	stop     chan bool
-}
 
 // Interface is a common-cache interface.
 type Interface[K comparable, V any] interface {
@@ -45,7 +37,15 @@ var (
 type Item[K comparable, V any] struct {
 	Key        K
 	Value      V
-	Expiration int64
+	Expiration time.Time
+}
+
+// Expired returns true if the item has expired.
+func (item *Item[K, V]) Expired() bool {
+	if item.Expiration.IsZero() {
+		return false
+	}
+	return nowFunc().After(item.Expiration)
 }
 
 var nowFunc = time.Now
@@ -54,23 +54,14 @@ var nowFunc = time.Now
 type ItemOption func(*itemOptions)
 
 type itemOptions struct {
-	expiration int64 // default none
-}
-
-// Expired returns true if the item has expired.
-func (item itemOptions) Expired() bool {
-	if item.expiration == 0 {
-		return false
-	}
-
-	return nowFunc().UnixNano() > item.expiration
+	expiration time.Time // default none
 }
 
 // WithExpiration is an option to set expiration time for any items.
 // If the expiration is zero or negative value, it treats as w/o expiration.
 func WithExpiration(exp time.Duration) ItemOption {
 	return func(o *itemOptions) {
-		o.expiration = nowFunc().Add(exp).UnixNano()
+		o.expiration = nowFunc().Add(exp)
 	}
 }
 
@@ -100,12 +91,14 @@ type Cache[K comparable, V any] struct {
 type Option[K comparable, V any] func(*options[K, V])
 
 type options[K comparable, V any] struct {
-	cache Interface[K, *Item[K, V]]
+	cache           Interface[K, *Item[K, V]]
+	janitorInterval time.Duration
 }
 
 func newOptions[K comparable, V any]() *options[K, V] {
 	return &options[K, V]{
-		cache: simple.NewCache[K, *Item[K, V]](),
+		cache:           simple.NewCache[K, *Item[K, V]](),
+		janitorInterval: time.Minute,
 	}
 }
 
@@ -144,7 +137,18 @@ func AsClock[K comparable, V any](opts ...clock.Option) Option[K, V] {
 	}
 }
 
+// WithJanitorInterval is an option to specify how often cache should delete expired items.
+//
+// Default is 1 minute.
+func WithJanitorInterval[K comparable, V any](d time.Duration) Option[K, V] {
+	return func(o *options[K, V]) {
+		o.janitorInterval = d
+	}
+}
+
 // New creates a new thread safe Cache.
+// This function will be stopped an internal janitor when the cache is
+// no longer referenced anywhere.
 //
 // There are several Cache replacement policies available with you specified any options.
 func New[K comparable, V any](opts ...Option[K, V]) *Cache[K, V] {
@@ -152,48 +156,29 @@ func New[K comparable, V any](opts ...Option[K, V]) *Cache[K, V] {
 	for _, optFunc := range opts {
 		optFunc(o)
 	}
-
+	ctx, cancel := context.WithCancel(context.Background())
 	cache := &Cache[K, V]{
-		cache: o.cache,
+		cache:   o.cache,
+		janitor: newJanitor(ctx, o.janitorInterval),
 	}
-
-	// @TODO change the ticker timer default value
-	cache.runJanitor(cache, time.Minute)
-	runtime.SetFinalizer(cache, cache.stopJanitor)
-
+	runtime.SetFinalizer(cache, func(self *Cache[K, V]) {
+		cancel()
+	})
 	return cache
 }
 
-func (_ *Cache[K, V]) stopJanitor(c *Cache[K, V]) {
-	if c.janitor != nil {
-		c.janitor.stop <- true
+// NewContext creates a new thread safe Cache with context.
+//
+// There are several Cache replacement policies available with you specified any options.
+func NewContext[K comparable, V any](ctx context.Context, opts ...Option[K, V]) *Cache[K, V] {
+	o := newOptions[K, V]()
+	for _, optFunc := range opts {
+		optFunc(o)
 	}
-
-	c.janitor = nil
-}
-
-func (_ *Cache[K, V]) runJanitor(c *Cache[K, V], ci time.Duration) {
-	c.stopJanitor(c)
-
-	j := &janitor{
-		Interval: ci,
-		stop:     make(chan bool),
+	return &Cache[K, V]{
+		cache:   o.cache,
+		janitor: newJanitor(ctx, o.janitorInterval),
 	}
-
-	c.janitor = j
-
-	go func() {
-		ticker := time.NewTicker(j.Interval)
-		for {
-			select {
-			case <-ticker.C:
-				c.DeleteExpired()
-			case <-j.stop:
-				ticker.Stop()
-				return
-			}
-		}
-	}()
 }
 
 // Get looks up a key's value from the cache.
@@ -206,9 +191,9 @@ func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
 		return
 	}
 
-	// if is expired, delete is and return nil instead
-	if item.Expiration > 0 && nowFunc().UnixNano() > item.Expiration {
-		c.cache.Delete(key)
+	// Returns nil if the item has been expired.
+	// Do not delete here and leave it to an external process such as Janitor.
+	if item.Expired() {
 		return value, false
 	}
 
@@ -217,9 +202,12 @@ func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
 
 // DeleteExpired all expired items from the cache.
 func (c *Cache[K, V]) DeleteExpired() {
-	for _, keys := range c.cache.Keys() {
-		// delete all expired items by using get method
-		_, _ = c.Get(keys)
+	for _, key := range c.cache.Keys() {
+		// if is expired, delete it and return nil instead
+		item, ok := c.cache.Get(key)
+		if ok && item.Expired() {
+			c.cache.Delete(key)
+		}
 	}
 }
 
@@ -228,11 +216,6 @@ func (c *Cache[K, V]) Set(key K, val V, opts ...ItemOption) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	item := newItem(key, val, opts...)
-	if item.Expiration <= 0 {
-		c.cache.Set(key, item)
-		return
-	}
-
 	c.cache.Set(key, item)
 }
 
