@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -15,8 +16,8 @@ func TestJanitor(t *testing.T) {
 	checkDone := make(chan struct{})
 	janitor.done = checkDone
 
-	calledClean := false
-	janitor.run(func() { calledClean = true })
+	calledClean := int64(0)
+	janitor.run(func() { atomic.AddInt64(&calledClean, 1) })
 
 	// waiting for cleanup
 	time.Sleep(10 * time.Millisecond)
@@ -28,7 +29,8 @@ func TestJanitor(t *testing.T) {
 		t.Fatalf("failed to call done channel")
 	}
 
-	if !calledClean {
-		t.Fatal("failed to call clean callback in janitor")
+	got := atomic.LoadInt64(&calledClean)
+	if got <= 1 {
+		t.Fatalf("failed to call clean callback in janitor: %d", got)
 	}
 }
