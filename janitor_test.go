@@ -13,7 +13,7 @@ func TestJanitor(t *testing.T) {
 
 	janitor := newJanitor(ctx, time.Millisecond)
 
-	checkDone := make(chan struct{})
+	checkDone := make(chan any)
 	janitor.done = checkDone
 
 	calledClean := int64(0)
