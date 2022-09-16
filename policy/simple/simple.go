@@ -59,3 +59,8 @@ func (c *Cache[K, _]) Keys() []K {
 func (c *Cache[K, V]) Delete(key K) {
 	delete(c.items, key)
 }
+
+// Size returns number of items in the cache.
+func (c *Cache[K, V]) Size() int {
+	return len(c.items)
+}

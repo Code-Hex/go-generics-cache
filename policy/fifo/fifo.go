@@ -104,3 +104,8 @@ func (c *Cache[K, V]) dequeue() *list.Element {
 	c.queue.Remove(e)
 	return e
 }
+
+// Size returns number of items in the cache.
+func (c *Cache[K, V]) Size() int {
+	return len(c.items)
+}

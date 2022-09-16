@@ -98,3 +98,8 @@ func (c *Cache[K, V]) Delete(key K) {
 func (c *Cache[K, V]) Len() int {
 	return c.queue.Len()
 }
+
+// Size returns number of items in the cache.
+func (c *Cache[K, V]) Size() int {
+	return len(c.items)
+}

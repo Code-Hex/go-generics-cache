@@ -16,9 +16,19 @@ import (
 
 // Interface is a common-cache interface.
 type Interface[K comparable, V any] interface {
+	// Get looks up a key's value from the cache.
 	Get(key K) (value V, ok bool)
+
+	// Set sets a value to the cache with key. replacing any existing value.
 	Set(key K, val V)
+
+	// Keys returns the keys of the cache. The order is relied on algorithms.
 	Keys() []K
+
+	// Size returns number of items in the cache.
+	Size() int
+
+	// Delete deletes the item with provided key from the cache.
 	Delete(key K)
 }
 
@@ -219,11 +229,16 @@ func (c *Cache[K, V]) Set(key K, val V, opts ...ItemOption) {
 	c.cache.Set(key, item)
 }
 
-// Keys returns the keys of the cache. the order is relied on algorithms.
+// Keys returns the keys of the cache. The order is relied on algorithms.
 func (c *Cache[K, V]) Keys() []K {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return c.cache.Keys()
+}
+
+// Size returns number of items in the cache.
+func (c *Cache[K, V]) Size() int {
+	return c.cache.Size()
 }
 
 // Delete deletes the item with provided key from the cache.

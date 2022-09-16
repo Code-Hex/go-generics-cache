@@ -116,3 +116,8 @@ func (c *Cache[K, V]) delete(e *list.Element) {
 	entry := e.Value.(*entry[K, V])
 	delete(c.items, entry.key)
 }
+
+// Size returns number of items in the cache.
+func (c *Cache[K, V]) Size() int {
+	return len(c.items)
+}
