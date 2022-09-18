@@ -201,12 +201,18 @@ func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
 
 // DeleteExpired all expired items from the cache.
 func (c *Cache[K, V]) DeleteExpired() {
-	for _, key := range c.cache.Keys() {
+	c.mu.Lock()
+	keys := c.cache.Keys()
+	c.mu.Unlock()
+
+	for _, key := range keys {
+		c.mu.Lock()
 		// if is expired, delete it and return nil instead
 		item, ok := c.cache.Get(key)
 		if ok && item.Expired() {
 			c.cache.Delete(key)
 		}
+		c.mu.Unlock()
 	}
 }
 

@@ -2,7 +2,6 @@ package cache_test
 
 import (
 	"math/rand"
-	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -121,6 +120,4 @@ func TestCallJanitor(t *testing.T) {
 	if len(keys) != 0 {
 		t.Errorf("want items is empty but got %d", len(keys))
 	}
-
-	runtime.GC()
 }
