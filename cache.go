@@ -2,7 +2,6 @@ package cache
 
 import (
 	"context"
-	"runtime"
 	"sync"
 	"time"
 
@@ -16,9 +15,13 @@ import (
 
 // Interface is a common-cache interface.
 type Interface[K comparable, V any] interface {
+	// Get looks up a key's value from the cache.
 	Get(key K) (value V, ok bool)
+	// Set sets a value to the cache with key. replacing any existing value.
 	Set(key K, val V)
+	// Keys returns the keys of the cache. The order is relied on algorithms.
 	Keys() []K
+	// Delete deletes the item with provided key from the cache.
 	Delete(key K)
 }
 
@@ -147,27 +150,17 @@ func WithJanitorInterval[K comparable, V any](d time.Duration) Option[K, V] {
 }
 
 // New creates a new thread safe Cache.
-// This function will be stopped an internal janitor when the cache is
-// no longer referenced anywhere.
+// The janitor will not be stopped which is created by this function. If you
+// want to stop the janitor gracefully, You should use the `NewContext` function
+// instead of this.
 //
 // There are several Cache replacement policies available with you specified any options.
 func New[K comparable, V any](opts ...Option[K, V]) *Cache[K, V] {
-	o := newOptions[K, V]()
-	for _, optFunc := range opts {
-		optFunc(o)
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	cache := &Cache[K, V]{
-		cache:   o.cache,
-		janitor: newJanitor(ctx, o.janitorInterval),
-	}
-	runtime.SetFinalizer(cache, func(self *Cache[K, V]) {
-		cancel()
-	})
-	return cache
+	return NewContext(context.Background(), opts...)
 }
 
 // NewContext creates a new thread safe Cache with context.
+// This function will be stopped an internal janitor when the context is cancelled.
 //
 // There are several Cache replacement policies available with you specified any options.
 func NewContext[K comparable, V any](ctx context.Context, opts ...Option[K, V]) *Cache[K, V] {
@@ -175,10 +168,12 @@ func NewContext[K comparable, V any](ctx context.Context, opts ...Option[K, V]) 
 	for _, optFunc := range opts {
 		optFunc(o)
 	}
-	return &Cache[K, V]{
+	cache := &Cache[K, V]{
 		cache:   o.cache,
 		janitor: newJanitor(ctx, o.janitorInterval),
 	}
+	cache.janitor.run(cache.DeleteExpired)
+	return cache
 }
 
 // Get looks up a key's value from the cache.
@@ -202,12 +197,18 @@ func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
 
 // DeleteExpired all expired items from the cache.
 func (c *Cache[K, V]) DeleteExpired() {
-	for _, key := range c.cache.Keys() {
+	c.mu.Lock()
+	keys := c.cache.Keys()
+	c.mu.Unlock()
+
+	for _, key := range keys {
+		c.mu.Lock()
 		// if is expired, delete it and return nil instead
 		item, ok := c.cache.Get(key)
 		if ok && item.Expired() {
 			c.cache.Delete(key)
 		}
+		c.mu.Unlock()
 	}
 }
 

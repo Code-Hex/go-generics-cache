@@ -23,10 +23,12 @@ func newJanitor(ctx context.Context, interval time.Duration) *janitor {
 	return j
 }
 
+// stop to stop the janitor.
 func (j *janitor) stop() {
 	j.once.Do(func() { close(j.done) })
 }
 
+// run with the given cleanup callback function.
 func (j *janitor) run(cleanup func()) {
 	go func() {
 		ticker := time.NewTicker(j.interval)
