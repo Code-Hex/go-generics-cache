@@ -32,27 +32,19 @@ go-generics-cache is an in-memory key:value store/cache that is suitable for app
 
 Go 1.18 or later.
 
-If Go 1.18 has not been released but you want to try this package, you can easily do so by using the [`gotip`](https://pkg.go.dev/golang.org/dl/gotip) command.
-
-```sh
-$ go install golang.org/dl/gotip@latest
-$ gotip download # latest commit
-$ gotip version
-go version devel go1.18-c2397905e0 Sat Nov 13 03:33:55 2021 +0000 darwin/arm64
-```
-
 ## Install
 
     $ go get github.com/Code-Hex/go-generics-cache
 
 ## Usage
 
-See also [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/example_test.go) or [gotipplay playground](https://go.dev/play/p/MRF_I4oUS_W?v=gotip)
+See also [examples](https://github.com/Code-Hex/go-generics-cache/blob/main/example_test.go) or [go playground](https://go.dev/play/p/kDs-6wpRAcX)
 
 ```go
 package main
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -60,8 +52,11 @@ import (
 )
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// use simple cache algorithm without options.
-	c := cache.New[string, int]()
+	c := cache.NewContext[string, int](ctx)
 	c.Set("a", 1)
 	gota, aok := c.Get("a")
 	gotb, bok := c.Get("b")
