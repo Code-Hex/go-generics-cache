@@ -150,7 +150,9 @@ func WithJanitorInterval[K comparable, V any](d time.Duration) Option[K, V] {
 }
 
 // New creates a new thread safe Cache.
-// The janitor will not be stopped which is created by this function.
+// The janitor will not be stopped which is created by this function. If you
+// want to stop the janitor gracefully, You should use the `NewContext` function
+// instead of this.
 //
 // There are several Cache replacement policies available with you specified any options.
 func New[K comparable, V any](opts ...Option[K, V]) *Cache[K, V] {
