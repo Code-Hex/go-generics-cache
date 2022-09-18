@@ -16,9 +16,13 @@ import (
 
 // Interface is a common-cache interface.
 type Interface[K comparable, V any] interface {
+	// Get looks up a key's value from the cache.
 	Get(key K) (value V, ok bool)
+	// Set sets a value to the cache with key. replacing any existing value.
 	Set(key K, val V)
+	// Keys returns the keys of the cache. The order is relied on algorithms.
 	Keys() []K
+	// Delete deletes the item with provided key from the cache.
 	Delete(key K)
 }
 
@@ -152,15 +156,8 @@ func WithJanitorInterval[K comparable, V any](d time.Duration) Option[K, V] {
 //
 // There are several Cache replacement policies available with you specified any options.
 func New[K comparable, V any](opts ...Option[K, V]) *Cache[K, V] {
-	o := newOptions[K, V]()
-	for _, optFunc := range opts {
-		optFunc(o)
-	}
 	ctx, cancel := context.WithCancel(context.Background())
-	cache := &Cache[K, V]{
-		cache:   o.cache,
-		janitor: newJanitor(ctx, o.janitorInterval),
-	}
+	cache := NewContext[K, V](ctx)
 	runtime.SetFinalizer(cache, func(self *Cache[K, V]) {
 		cancel()
 	})
@@ -175,10 +172,12 @@ func NewContext[K comparable, V any](ctx context.Context, opts ...Option[K, V]) 
 	for _, optFunc := range opts {
 		optFunc(o)
 	}
-	return &Cache[K, V]{
+	cache := &Cache[K, V]{
 		cache:   o.cache,
 		janitor: newJanitor(ctx, o.janitorInterval),
 	}
+	cache.janitor.run(cache.DeleteExpired)
+	return cache
 }
 
 // Get looks up a key's value from the cache.
