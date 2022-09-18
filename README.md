@@ -2,7 +2,7 @@
 
 [![.github/workflows/test.yml](https://github.com/Code-Hex/go-generics-cache/actions/workflows/test.yml/badge.svg)](https://github.com/Code-Hex/go-generics-cache/actions/workflows/test.yml) [![codecov](https://codecov.io/gh/Code-Hex/go-generics-cache/branch/main/graph/badge.svg?token=Wm7UEwgiZu)](https://codecov.io/gh/Code-Hex/go-generics-cache) [![Go Reference](https://pkg.go.dev/badge/github.com/Code-Hex/go-generics-cache.svg)](https://pkg.go.dev/github.com/Code-Hex/go-generics-cache)
 
-go-generics-cache is an in-memory key:value store/cache that is suitable for applications running on a single machine. This in-memory cache uses [Go Generics](https://go.dev/blog/generics-proposal) which will be introduced in 1.18.
+go-generics-cache is an in-memory key:value store/cache that is suitable for applications running on a single machine. This in-memory cache uses [Go Generics](https://go.dev/blog/generics-proposal) which is introduced in 1.18.
 
 - a thread-safe
 - implemented with [Go Generics](https://go.dev/blog/generics-proposal)
