@@ -2,8 +2,10 @@ package cache_test
 
 import (
 	"math/rand"
+	"runtime"
 	"sync"
 	"testing"
+	"time"
 
 	cache "github.com/Code-Hex/go-generics-cache"
 	"github.com/Code-Hex/go-generics-cache/policy/clock"
@@ -102,4 +104,23 @@ func TestMultiThread(t *testing.T) {
 			wg.Wait()
 		})
 	}
+}
+
+func TestCallJanitor(t *testing.T) {
+	c := cache.New(
+		cache.WithJanitorInterval[string, int](100 * time.Millisecond),
+	)
+
+	c.Set("1", 10, cache.WithExpiration(10*time.Millisecond))
+	c.Set("2", 20, cache.WithExpiration(20*time.Millisecond))
+	c.Set("3", 30, cache.WithExpiration(30*time.Millisecond))
+
+	<-time.After(300 * time.Millisecond)
+
+	keys := c.Keys()
+	if len(keys) != 0 {
+		t.Errorf("want items is empty but got %d", len(keys))
+	}
+
+	runtime.GC()
 }
