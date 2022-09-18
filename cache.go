@@ -2,7 +2,6 @@ package cache
 
 import (
 	"context"
-	"runtime"
 	"sync"
 	"time"
 
@@ -151,20 +150,15 @@ func WithJanitorInterval[K comparable, V any](d time.Duration) Option[K, V] {
 }
 
 // New creates a new thread safe Cache.
-// This function will be stopped an internal janitor when the cache is
-// no longer referenced anywhere.
+// The janitor will not be stopped which is created by this function.
 //
 // There are several Cache replacement policies available with you specified any options.
 func New[K comparable, V any](opts ...Option[K, V]) *Cache[K, V] {
-	ctx, cancel := context.WithCancel(context.Background())
-	cache := NewContext(ctx, opts...)
-	runtime.SetFinalizer(cache, func(self *Cache[K, V]) {
-		cancel()
-	})
-	return cache
+	return NewContext(context.Background(), opts...)
 }
 
 // NewContext creates a new thread safe Cache with context.
+// This function will be stopped an internal janitor when the context is cancelled.
 //
 // There are several Cache replacement policies available with you specified any options.
 func NewContext[K comparable, V any](ctx context.Context, opts ...Option[K, V]) *Cache[K, V] {
