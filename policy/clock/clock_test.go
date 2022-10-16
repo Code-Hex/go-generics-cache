@@ -1,6 +1,7 @@
 package clock_test
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 
@@ -123,10 +124,29 @@ func TestKeys(t *testing.T) {
 			"hoge",
 		}, ",")
 		if got2 != want2 {
-			t.Errorf("want2 %q, but got2 %q", want, got)
+			t.Errorf("want2 %q, but got2 %q", want2, got2)
 		}
 		if len(cache.Keys()) != cache.Len() {
 			t.Errorf("want2 number of keys %d, but got2 %d", len(cache.Keys()), cache.Len())
 		}
 	})
+}
+
+func TestIssue29(t *testing.T) {
+	cap := 3
+	cache := clock.NewCache[string, int](clock.WithCapacity(cap))
+	for i := 0; i < cap; i++ {
+		cache.Set(strconv.Itoa(i), i)
+	}
+	cache.Set(strconv.Itoa(cap), cap)
+
+	keys := cache.Keys()
+	if got := len(keys); cap != got {
+		t.Errorf("want number of keys %d, but got %d", cap, got)
+	}
+	wantKeys := "3,1,2"
+	gotKeys := strings.Join(keys, ",")
+	if wantKeys != gotKeys {
+		t.Errorf("want keys %q, but got keys %q", wantKeys, gotKeys)
+	}
 }
