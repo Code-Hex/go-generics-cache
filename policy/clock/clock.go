@@ -86,21 +86,20 @@ func (c *Cache[K, V]) Get(key K) (zero V, _ bool) {
 		return
 	}
 	entry := e.Value.(*entry[K, V])
-	entry.referenceCount = 1
+	entry.referenceCount++
 	return entry.val, true
 }
 
 func (c *Cache[K, V]) evict() {
-	if c.hand.Value == nil {
-		return
-	}
-	for c.hand.Value.(*entry[K, V]).referenceCount > 0 {
+	for c.hand.Value != nil && c.hand.Value.(*entry[K, V]).referenceCount > 0 {
 		c.hand.Value.(*entry[K, V]).referenceCount--
 		c.hand = c.hand.Next()
 	}
-	entry := c.hand.Value.(*entry[K, V])
-	delete(c.items, entry.key)
-	c.hand.Value = nil
+	if c.hand.Value != nil {
+		entry := c.hand.Value.(*entry[K, V])
+		delete(c.items, entry.key)
+		c.hand.Value = nil
+	}
 }
 
 // Keys returns the keys of the cache. the order as same as current ring order.
@@ -116,12 +115,10 @@ func (c *Cache[K, V]) Keys() []K {
 	// iterating
 	for p := c.head.Next(); p != r; p = p.Next() {
 		if p.Value == nil {
-			break
+			continue
 		}
 		e := p.Value.(*entry[K, V])
-		if e.referenceCount > 0 {
-			keys = append(keys, e.key)
-		}
+		keys = append(keys, e.key)
 	}
 	return keys
 }
@@ -130,7 +127,7 @@ func (c *Cache[K, V]) Keys() []K {
 func (c *Cache[K, V]) Delete(key K) {
 	if e, ok := c.items[key]; ok {
 		delete(c.items, key)
-		e.Value.(*entry[K, V]).referenceCount = 0
+		e.Value = nil
 	}
 }
 
