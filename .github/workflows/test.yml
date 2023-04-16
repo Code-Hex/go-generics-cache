@@ -17,6 +17,7 @@ jobs:
         go:
         - '^1.18'
         - '^1.19'
+        - '^1.20'
     steps:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v3
@@ -31,7 +32,7 @@ jobs:
     - name: Test Coverage (pkg)
       run: go test ./... -race -coverprofile=${{ steps.vars.outputs.coverage_txt }}
     - name: Upload coverage
-      if: ${{ matrix.go == '^1.19' }}
+      if: ${{ matrix.go == '^1.20' }}
       uses: codecov/codecov-action@v2
       with:
         files: ${{ steps.vars.outputs.coverage_txt }}
