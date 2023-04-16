@@ -44,7 +44,7 @@ func TestSet(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	cache := lfu.NewCache[string, int](lfu.WithCapacity(1))
+	cache := lfu.NewCache[string, int](lfu.WithCapacity(2))
 	cache.Set("foo", 1)
 	if got := cache.Len(); got != 1 {
 		t.Fatalf("invalid length: %d", got)
@@ -62,4 +62,16 @@ func TestDelete(t *testing.T) {
 	if _, ok := cache.Get("foo"); ok {
 		t.Fatalf("invalid get after deleted %v", ok)
 	}
+}
+
+// check don't panic
+func TestIssue33(t *testing.T) {
+	cache := lfu.NewCache[string, int](lfu.WithCapacity(2))
+	cache.Set("foo", 1)
+	cache.Set("foo2", 2)
+	cache.Set("foo3", 3)
+
+	cache.Delete("foo")
+	cache.Delete("foo2")
+	cache.Delete("foo3")
 }

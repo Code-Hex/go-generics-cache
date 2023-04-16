@@ -65,7 +65,11 @@ func (l *priorityQueue[K, V]) Pop() interface{} {
 	entry := old[n-1]
 	old[n-1] = nil   // avoid memory leak
 	entry.index = -1 // for safety
-	*l = old[0 : n-1]
+	new := old[0 : n-1]
+	for i := 0; i < len(new); i++ {
+		new[i].index = i
+	}
+	*l = new
 	return entry
 }
 
