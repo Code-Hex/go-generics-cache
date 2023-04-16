@@ -2,6 +2,7 @@ package lfu
 
 import (
 	"container/heap"
+	"log"
 )
 
 // Cache is used a LFU (Least-frequently used) cache replacement policy.
@@ -69,6 +70,8 @@ func (c *Cache[K, V]) Set(key K, val V) {
 
 	if len(c.items) == c.cap {
 		evictedEntry := heap.Pop(c.queue).(*entry[K, V])
+		// e := evictedEntry
+		// log.Println(c.items, e.index, e.key)
 		delete(c.items, evictedEntry.key)
 	}
 
@@ -89,6 +92,7 @@ func (c *Cache[K, V]) Keys() []K {
 // Delete deletes the item with provided key from the cache.
 func (c *Cache[K, V]) Delete(key K) {
 	if e, ok := c.items[key]; ok {
+		log.Println(c.items, e.index, e.key)
 		heap.Remove(c.queue, e.index)
 		delete(c.items, key)
 	}
