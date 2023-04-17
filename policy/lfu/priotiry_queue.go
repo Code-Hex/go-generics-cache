@@ -3,6 +3,8 @@ package lfu
 import (
 	"container/heap"
 	"time"
+
+	"github.com/Code-Hex/go-generics-cache/policy/internal/policyutil"
 )
 
 type entry[K comparable, V any] struct {
@@ -18,7 +20,7 @@ func newEntry[K comparable, V any](key K, val V) *entry[K, V] {
 		index:          0,
 		key:            key,
 		val:            val,
-		referenceCount: 1,
+		referenceCount: policyutil.GetReferenceCount(val),
 		referencedAt:   time.Now(),
 	}
 }

@@ -61,6 +61,9 @@ func (c *Cache[K, V]) Get(key K) (zero V, _ bool) {
 }
 
 // Set sets a value to the cache with key. replacing any existing value.
+//
+// If value satisfies "interface{ GetReferenceCount() int }", the value of
+// the GetReferenceCount() method is used to set the initial value of reference count.
 func (c *Cache[K, V]) Set(key K, val V) {
 	if e, ok := c.items[key]; ok {
 		c.queue.update(e, val)

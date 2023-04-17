@@ -38,9 +38,10 @@ var (
 
 // Item is an item
 type Item[K comparable, V any] struct {
-	Key        K
-	Value      V
-	Expiration time.Time
+	Key                   K
+	Value                 V
+	Expiration            time.Time
+	InitialReferenceCount int
 }
 
 // Expired returns true if the item has expired.
@@ -51,13 +52,20 @@ func (item *Item[K, V]) Expired() bool {
 	return nowFunc().After(item.Expiration)
 }
 
+// GetReferenceCount returns reference count to be used when setting
+// the cache item for the first time.
+func (item *Item[K, V]) GetReferenceCount() int {
+	return item.InitialReferenceCount
+}
+
 var nowFunc = time.Now
 
 // ItemOption is an option for cache item.
 type ItemOption func(*itemOptions)
 
 type itemOptions struct {
-	expiration time.Time // default none
+	expiration     time.Time // default none
+	referenceCount int
 }
 
 // WithExpiration is an option to set expiration time for any items.
@@ -68,6 +76,17 @@ func WithExpiration(exp time.Duration) ItemOption {
 	}
 }
 
+// WithReferenceCount is an option to set reference count for any items.
+// This option is only applicable to cache policies that have a reference count (e.g., Clock, LFU).
+// referenceCount specifies the reference count value to set for the cache item.
+//
+// the default is 1.
+func WithReferenceCount(referenceCount int) ItemOption {
+	return func(o *itemOptions) {
+		o.referenceCount = referenceCount
+	}
+}
+
 // newItem creates a new item with specified any options.
 func newItem[K comparable, V any](key K, val V, opts ...ItemOption) *Item[K, V] {
 	o := new(itemOptions)
@@ -75,16 +94,16 @@ func newItem[K comparable, V any](key K, val V, opts ...ItemOption) *Item[K, V] 
 		optFunc(o)
 	}
 	return &Item[K, V]{
-		Key:        key,
-		Value:      val,
-		Expiration: o.expiration,
+		Key:                   key,
+		Value:                 val,
+		Expiration:            o.expiration,
+		InitialReferenceCount: o.referenceCount,
 	}
 }
 
 // Cache is a thread safe cache.
 type Cache[K comparable, V any] struct {
 	cache Interface[K, *Item[K, V]]
-	//expirations map[K]chan struct{}
 	// mu is used to do lock in some method process.
 	mu      sync.Mutex
 	janitor *janitor

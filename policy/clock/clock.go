@@ -2,6 +2,8 @@ package clock
 
 import (
 	"container/ring"
+
+	"github.com/Code-Hex/go-generics-cache/policy/internal/policyutil"
 )
 
 // Cache is used The clock cache replacement policy.
@@ -62,6 +64,9 @@ func NewCache[K comparable, V any](opts ...Option) *Cache[K, V] {
 }
 
 // Set sets any item to the cache. replacing any existing item.
+//
+// If value satisfies "interface{ GetReferenceCount() int }", the value of
+// the GetReferenceCount() method is used to set the initial value of reference count.
 func (c *Cache[K, V]) Set(key K, val V) {
 	if e, ok := c.items[key]; ok {
 		entry := e.Value.(*entry[K, V])
@@ -73,7 +78,7 @@ func (c *Cache[K, V]) Set(key K, val V) {
 	c.hand.Value = &entry[K, V]{
 		key:            key,
 		val:            val,
-		referenceCount: 1,
+		referenceCount: policyutil.GetReferenceCount(val),
 	}
 	c.items[key] = c.hand
 	c.hand = c.hand.Next()
