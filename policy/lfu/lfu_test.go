@@ -6,6 +6,12 @@ import (
 	"github.com/Code-Hex/go-generics-cache/policy/lfu"
 )
 
+type tmp struct {
+	i int
+}
+
+func (t *tmp) GetReferenceCount() int { return t.i }
+
 func TestSet(t *testing.T) {
 	// set capacity is 1
 	cache := lfu.NewCache[string, int](lfu.WithCapacity(1))
@@ -41,6 +47,25 @@ func TestSet(t *testing.T) {
 	if bar != 100 || !ok {
 		t.Fatalf("invalid replacing value bar %d, cachehit %v", bar, ok)
 	}
+
+	t.Run("with initilal reference count", func(t *testing.T) {
+		cache := lfu.NewCache[string, *tmp](lfu.WithCapacity(2))
+		cache.Set("foo", &tmp{i: 10}) // the highest reference count
+		cache.Set("foo2", &tmp{i: 2}) // expected eviction
+		if got := cache.Len(); got != 2 {
+			t.Fatalf("invalid length: %d", got)
+		}
+
+		cache.Set("foo3", &tmp{i: 3})
+
+		// checks deleted the lowest reference count
+		if _, ok := cache.Get("foo2"); ok {
+			t.Fatalf("invalid delete oldest value foo2 %v", ok)
+		}
+		if _, ok := cache.Get("foo"); !ok {
+			t.Fatalf("invalid value foo is not found")
+		}
+	})
 }
 
 func TestDelete(t *testing.T) {

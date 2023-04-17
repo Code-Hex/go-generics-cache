@@ -64,6 +64,9 @@ func NewCache[K comparable, V any](opts ...Option) *Cache[K, V] {
 }
 
 // Set sets any item to the cache. replacing any existing item.
+//
+// If value satisfies "interface{ GetReferenceCount() int }", the value of
+// the GetReferenceCount() method is used to set the initial value of reference count.
 func (c *Cache[K, V]) Set(key K, val V) {
 	if e, ok := c.items[key]; ok {
 		entry := e.Value.(*entry[K, V])

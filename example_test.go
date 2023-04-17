@@ -6,6 +6,7 @@ import (
 	"time"
 
 	cache "github.com/Code-Hex/go-generics-cache"
+	"github.com/Code-Hex/go-generics-cache/policy/lfu"
 )
 
 func ExampleCache() {
@@ -77,21 +78,29 @@ func ExampleWithExpiration() {
 }
 
 func ExampleWithReferenceCount() {
-	c := cache.New(cache.AsLFU[string, int]())
-	c.Set("a", 1, cache.WithReferenceCount(2))
+	c := cache.New(cache.AsLFU[string, int](lfu.WithCapacity(2)))
+
+	// set item with reference count
+	c.Set("a", 1, cache.WithReferenceCount(5))
 
 	// check item is set.
 	gota, aok := c.Get("a")
 	fmt.Println(gota, aok)
 
-	c.Set("b", 2, cache.WithReferenceCount(3))
+	c.Set("b", 2)
+	c.Set("c", 3)
 
+	// evicted becauce the lowest reference count.
 	gotb, bok := c.Get("b")
 	fmt.Println(gotb, bok)
 
+	gotc, cok := c.Get("c")
+	fmt.Println(gotc, cok)
+
 	// Output:
 	// 1 true
-	// 2 true
+	// 0 false
+	// 3 true
 }
 
 func ExampleCache_Delete() {

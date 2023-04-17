@@ -79,6 +79,8 @@ func WithExpiration(exp time.Duration) ItemOption {
 // WithReferenceCount is an option to set reference count for any items.
 // This option is only applicable to cache policies that have a reference count (e.g., Clock, LFU).
 // referenceCount specifies the reference count value to set for the cache item.
+//
+// the default is 1.
 func WithReferenceCount(referenceCount int) ItemOption {
 	return func(o *itemOptions) {
 		o.referenceCount = referenceCount
@@ -102,7 +104,6 @@ func newItem[K comparable, V any](key K, val V, opts ...ItemOption) *Item[K, V] 
 // Cache is a thread safe cache.
 type Cache[K comparable, V any] struct {
 	cache Interface[K, *Item[K, V]]
-	//expirations map[K]chan struct{}
 	// mu is used to do lock in some method process.
 	mu      sync.Mutex
 	janitor *janitor
