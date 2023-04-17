@@ -2,6 +2,8 @@ package clock
 
 import (
 	"container/ring"
+
+	"github.com/Code-Hex/go-generics-cache/policy/internal/policyutil"
 )
 
 // Cache is used The clock cache replacement policy.
@@ -73,7 +75,7 @@ func (c *Cache[K, V]) Set(key K, val V) {
 	c.hand.Value = &entry[K, V]{
 		key:            key,
 		val:            val,
-		referenceCount: 1,
+		referenceCount: policyutil.GetReferenceCount(val),
 	}
 	c.items[key] = c.hand
 	c.hand = c.hand.Next()

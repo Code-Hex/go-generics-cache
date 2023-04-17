@@ -76,6 +76,24 @@ func ExampleWithExpiration() {
 	// 0 false
 }
 
+func ExampleWithReferenceCount() {
+	c := cache.New(cache.AsLFU[string, int]())
+	c.Set("a", 1, cache.WithReferenceCount(2))
+
+	// check item is set.
+	gota, aok := c.Get("a")
+	fmt.Println(gota, aok)
+
+	c.Set("b", 2, cache.WithReferenceCount(3))
+
+	gotb, bok := c.Get("b")
+	fmt.Println(gotb, bok)
+
+	// Output:
+	// 1 true
+	// 2 true
+}
+
 func ExampleCache_Delete() {
 	c := cache.New(cache.AsMRU[string, int]())
 	c.Set("a", 1)
