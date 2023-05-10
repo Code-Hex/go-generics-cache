@@ -40,29 +40,29 @@ func newPriorityQueue[K comparable, V any](cap int) *priorityQueue[K, V] {
 // see example of priority queue: https://pkg.go.dev/container/heap
 var _ heap.Interface = (*priorityQueue[struct{}, interface{}])(nil)
 
-func (l priorityQueue[K, V]) Len() int { return len(l) }
+func (q priorityQueue[K, V]) Len() int { return len(q) }
 
-func (l priorityQueue[K, V]) Less(i, j int) bool {
-	if l[i].referenceCount == l[j].referenceCount {
-		return l[i].referencedAt.Before(l[j].referencedAt)
+func (q priorityQueue[K, V]) Less(i, j int) bool {
+	if q[i].referenceCount == q[j].referenceCount {
+		return q[i].referencedAt.Before(q[j].referencedAt)
 	}
-	return l[i].referenceCount < l[j].referenceCount
+	return q[i].referenceCount < q[j].referenceCount
 }
 
-func (l priorityQueue[K, V]) Swap(i, j int) {
-	l[i], l[j] = l[j], l[i]
-	l[i].index = i
-	l[i].index = j
+func (q priorityQueue[K, V]) Swap(i, j int) {
+	q[i], q[j] = q[j], q[i]
+	q[i].index = i
+	q[j].index = j
 }
 
-func (l *priorityQueue[K, V]) Push(x interface{}) {
+func (q *priorityQueue[K, V]) Push(x interface{}) {
 	entry := x.(*entry[K, V])
-	entry.index = len(*l)
-	*l = append(*l, entry)
+	entry.index = len(*q)
+	*q = append(*q, entry)
 }
 
-func (l *priorityQueue[K, V]) Pop() interface{} {
-	old := *l
+func (q *priorityQueue[K, V]) Pop() interface{} {
+	old := *q
 	n := len(old)
 	entry := old[n-1]
 	old[n-1] = nil   // avoid memory leak
@@ -71,12 +71,12 @@ func (l *priorityQueue[K, V]) Pop() interface{} {
 	for i := 0; i < len(new); i++ {
 		new[i].index = i
 	}
-	*l = new
+	*q = new
 	return entry
 }
 
-func (pq *priorityQueue[K, V]) update(e *entry[K, V], val V) {
+func (q *priorityQueue[K, V]) update(e *entry[K, V], val V) {
 	e.val = val
 	e.referenced()
-	heap.Fix(pq, e.index)
+	heap.Fix(q, e.index)
 }

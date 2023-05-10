@@ -2,6 +2,7 @@ package lfu
 
 import (
 	"container/heap"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -71,5 +72,44 @@ func TestPriorityQueue(t *testing.T) {
 	}
 	if want, got := len(nums)-2, queue.Len(); want != got {
 		t.Errorf("want %d, but got %d", want, got)
+	}
+}
+
+func Test_priorityQueue_Swap(t *testing.T) {
+	type args struct {
+		i int
+		j int
+	}
+	type testCase[K comparable, V any] struct {
+		name string
+		q    *priorityQueue[K, V]
+		args args
+		want *priorityQueue[K, V]
+	}
+	tests := []testCase[string, int]{
+		{
+			name: "swap case",
+			q: func() *priorityQueue[string, int] {
+				q := newPriorityQueue[string, int](10)
+				q.Push(&entry[string, int]{index: 0})
+				q.Push(&entry[string, int]{index: 1})
+				return q
+			}(),
+			args: args{i: 0, j: 1},
+			want: func() *priorityQueue[string, int] {
+				q := newPriorityQueue[string, int](10)
+				q.Push(&entry[string, int]{index: 1})
+				q.Push(&entry[string, int]{index: 0})
+				return q
+			}(),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.q.Swap(tt.args.i, tt.args.j)
+			if !reflect.DeepEqual(tt.q, tt.want) {
+				t.Errorf("want %v, got %v", tt.want, tt.q)
+			}
+		})
 	}
 }
