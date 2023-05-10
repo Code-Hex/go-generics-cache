@@ -52,7 +52,7 @@ func (l priorityQueue[K, V]) Less(i, j int) bool {
 func (l priorityQueue[K, V]) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
 	l[i].index = i
-	l[i].index = j
+	l[j].index = j
 }
 
 func (l *priorityQueue[K, V]) Push(x interface{}) {
