@@ -23,6 +23,10 @@ type Interface[K comparable, V any] interface {
 	Keys() []K
 	// Delete deletes the item with provided key from the cache.
 	Delete(key K)
+	// Saves cache keys and values to file
+	Save(filePath string) error
+	// Loads cache keys and values from file
+	Load(filePath string) error
 }
 
 var (
@@ -259,6 +263,20 @@ func (c *Cache[K, V]) Contains(key K) bool {
 	defer c.mu.Unlock()
 	_, ok := c.cache.Get(key)
 	return ok
+}
+
+// Saves cache to file
+func (c *Cache[K, V]) Save(filePath string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.cache.Save(filePath)
+}
+
+// Loads cache from file
+func (c *Cache[K, V]) Load(filePath string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.cache.Load(filePath)
 }
 
 // NumberCache is a in-memory cache which is able to store only Number constraint.

@@ -2,6 +2,9 @@ package clock
 
 import (
 	"container/ring"
+	"encoding/gob"
+	"fmt"
+	"os"
 
 	"github.com/Code-Hex/go-generics-cache/policy/internal/policyutil"
 )
@@ -139,4 +142,40 @@ func (c *Cache[K, V]) Delete(key K) {
 // Len returns the number of items in the cache.
 func (c *Cache[K, V]) Len() int {
 	return len(c.items)
+}
+
+// Saves cache state to file using gob encoder
+func (c *Cache[K, V]) Save(filePath string) error {
+	encodeFile, err := os.Create(filePath)
+	if err != nil {
+		return fmt.Errorf("Saving cache in file failed: %v", err)
+	}
+	defer encodeFile.Close()
+	encoder := gob.NewEncoder(encodeFile)
+
+	if err := encoder.Encode(c.items); err != nil {
+		return fmt.Errorf("Saving cache in file failed: %v", err)
+	}
+
+	return nil
+}
+
+// Loads cache state from file using gob decoder
+func (c *Cache[K, V]) Load(filePath string) error {
+	decodeFile, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("loading cache from file failed: %v", err)
+	}
+	defer decodeFile.Close()
+
+	decoder := gob.NewDecoder(decodeFile)
+	m := make(map[K]*ring.Ring)
+
+	if err := decoder.Decode(&m); err != nil {
+		return fmt.Errorf("loading cache from file failed: %v", err)
+	}
+
+	c.items = m
+
+	return nil
 }

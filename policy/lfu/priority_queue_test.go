@@ -25,13 +25,13 @@ func TestPriorityQueue(t *testing.T) {
 
 	// check the initial state
 	for idx, entry := range *queue {
-		if entry.index != idx {
-			t.Errorf("want index %d, but got %d", entry.index, idx)
+		if entry.Index != idx {
+			t.Errorf("want index %d, but got %d", entry.Index, idx)
 		}
-		if entry.referenceCount != 1 {
+		if entry.ReferenceCount != 1 {
 			t.Errorf("want count 1")
 		}
-		if got := entry.val; nums[idx] != got {
+		if got := entry.Val; nums[idx] != got {
 			t.Errorf("want value %d but got %d", nums[idx], got)
 		}
 	}
@@ -51,11 +51,11 @@ func TestPriorityQueue(t *testing.T) {
 	// check the priority by reference counter
 	wantValue := nums[len(nums)-1]
 	got := heap.Pop(queue).(*entry[int, int])
-	if got.index != -1 {
-		t.Errorf("want index -1, but got %d", got.index)
+	if got.Index != -1 {
+		t.Errorf("want index -1, but got %d", got.Index)
 	}
-	if wantValue != got.val {
-		t.Errorf("want the lowest priority value is %d, but got %d", wantValue, got.val)
+	if wantValue != got.Val {
+		t.Errorf("want the lowest priority value is %d, but got %d", wantValue, got.Val)
 	}
 	if want, got := len(nums)-1, queue.Len(); want != got {
 		t.Errorf("want %d, but got %d", want, got)
@@ -64,11 +64,11 @@ func TestPriorityQueue(t *testing.T) {
 	// check the priority by referenced_at
 	wantValue2 := nums[0]
 	got2 := heap.Pop(queue).(*entry[int, int])
-	if got.index != -1 {
-		t.Errorf("want index -1, but got %d", got.index)
+	if got.Index != -1 {
+		t.Errorf("want index -1, but got %d", got.Index)
 	}
-	if wantValue2 != got2.val {
-		t.Errorf("want the lowest priority value is %d, but got %d", wantValue2, got2.val)
+	if wantValue2 != got2.Val {
+		t.Errorf("want the lowest priority value is %d, but got %d", wantValue2, got2.Val)
 	}
 	if want, got := len(nums)-2, queue.Len(); want != got {
 		t.Errorf("want %d, but got %d", want, got)
@@ -91,15 +91,15 @@ func Test_priorityQueue_Swap(t *testing.T) {
 			name: "swap case",
 			q: func() *priorityQueue[string, int] {
 				q := newPriorityQueue[string, int](10)
-				q.Push(&entry[string, int]{index: 0})
-				q.Push(&entry[string, int]{index: 1})
+				q.Push(&entry[string, int]{Index: 0})
+				q.Push(&entry[string, int]{Index: 1})
 				return q
 			}(),
 			args: args{i: 0, j: 1},
 			want: func() *priorityQueue[string, int] {
 				q := newPriorityQueue[string, int](10)
-				q.Push(&entry[string, int]{index: 1})
-				q.Push(&entry[string, int]{index: 0})
+				q.Push(&entry[string, int]{Index: 1})
+				q.Push(&entry[string, int]{Index: 0})
 				return q
 			}(),
 		},
