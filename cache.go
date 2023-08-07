@@ -23,6 +23,8 @@ type Interface[K comparable, V any] interface {
 	Keys() []K
 	// Delete deletes the item with provided key from the cache.
 	Delete(key K)
+	// Len returns the number of items in the cache.
+	Len() int
 }
 
 var (
@@ -251,6 +253,13 @@ func (c *Cache[K, V]) Delete(key K) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.cache.Delete(key)
+}
+
+// Len returns the number of items in the cache.
+func (c *Cache[K, V]) Len() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.cache.Len()
 }
 
 // Contains reports whether key is within cache.
