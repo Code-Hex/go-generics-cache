@@ -257,7 +257,9 @@ func (c *Cache[K, V]) Delete(key K) {
 
 // Len returns the number of items in the cache.
 func (c *Cache[K, V]) Len() int {
-	return len(c.Keys())
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.cache.Len()
 }
 
 // Contains reports whether key is within cache.
