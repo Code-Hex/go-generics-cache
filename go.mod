@@ -1,4 +1,4 @@
-module github.com/Code-Hex/go-generics-cache
+module github.com/bn-jbowers/go-generics-cache
 
 go 1.18
 
