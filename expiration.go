@@ -5,11 +5,11 @@ import (
 	"time"
 )
 
-type expirationManager[K comparable] struct {
+type expirationManager[K any] struct {
 	queue expirationQueue[K]
 }
 
-func newExpirationManager[K comparable]() *expirationManager[K] {
+func newExpirationManager[K any]() *expirationManager[K] {
 	q := make(expirationQueue[K], 0)
 	heap.Init(&q)
 	return &expirationManager[K]{
@@ -58,14 +58,14 @@ func (m *expirationManager[K]) removeByItem(item *expirationKey[K]) {
 	m.removeByIndex(item.index)
 }
 
-type expirationKey[K comparable] struct {
+type expirationKey[K any] struct {
 	Val        K
 	expiration time.Time
 	index      int
 }
 
 // expirationQueue implements heap.Interface and holds CacheItems.
-type expirationQueue[K comparable] []*expirationKey[K]
+type expirationQueue[K any] []*expirationKey[K]
 
 var _ heap.Interface = (*expirationQueue[int])(nil)
 
