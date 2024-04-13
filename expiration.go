@@ -6,52 +6,60 @@ import (
 )
 
 type expirationManager[K comparable] struct {
-	queue   expirationQueue[K]
-	mapping map[K]*expirationKey[K]
+	queue expirationQueue[K]
 }
 
 func newExpirationManager[K comparable]() *expirationManager[K] {
 	q := make(expirationQueue[K], 0)
 	heap.Init(&q)
 	return &expirationManager[K]{
-		queue:   q,
-		mapping: make(map[K]*expirationKey[K]),
+		queue: q,
 	}
 }
 
-func (m *expirationManager[K]) update(key K, expiration time.Time) {
-	if e, ok := m.mapping[key]; ok {
-		heap.Fix(&m.queue, e.index)
-	} else {
-		v := &expirationKey[K]{
-			key:        key,
-			expiration: expiration,
-		}
-		heap.Push(&m.queue, v)
-		m.mapping[key] = v
+func (m *expirationManager[K]) updateByIndex(index int, expiration time.Time) {
+	if index >= 0 && index < m.len() {
+		m.queue[index].expiration = expiration
+		heap.Fix(&m.queue, index)
 	}
+}
+func (m *expirationManager[K]) updateByItem(item *expirationKey[K], expiration time.Time) {
+	m.updateByIndex(item.index, expiration)
+}
+
+func (m *expirationManager[K]) push(val K, expiration time.Time) *expirationKey[K] {
+	item := &expirationKey[K]{
+		Val:        val,
+		expiration: expiration,
+	}
+	heap.Push(&m.queue, item)
+	return item
 }
 
 func (m *expirationManager[K]) len() int {
 	return m.queue.Len()
 }
 
-func (m *expirationManager[K]) pop() K {
+func (m *expirationManager[K]) pop() *expirationKey[K] {
 	v := heap.Pop(&m.queue)
-	key := v.(*expirationKey[K]).key
-	delete(m.mapping, key)
-	return key
+	return v.(*expirationKey[K])
+}
+func (m *expirationManager[K]) top() *expirationKey[K] {
+	if m.len() == 0 {
+		return nil
+	}
+	return m.queue[0]
 }
 
-func (m *expirationManager[K]) remove(key K) {
-	if e, ok := m.mapping[key]; ok {
-		heap.Remove(&m.queue, e.index)
-		delete(m.mapping, key)
-	}
+func (m *expirationManager[K]) removeByIndex(index int) {
+	heap.Remove(&m.queue, index)
+}
+func (m *expirationManager[K]) removeByItem(item *expirationKey[K]) {
+	m.removeByIndex(item.index)
 }
 
 type expirationKey[K comparable] struct {
-	key        K
+	Val        K
 	expiration time.Time
 	index      int
 }

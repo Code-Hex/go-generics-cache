@@ -44,6 +44,7 @@ type Item[K comparable, V any] struct {
 	Value                 V
 	Expiration            time.Time
 	InitialReferenceCount int
+	queueKey              *expirationKey[K]
 }
 
 func (item *Item[K, V]) hasExpiration() bool {
@@ -224,29 +225,15 @@ func (c *Cache[K, V]) Get(key K) (zero V, ok bool) {
 
 // DeleteExpired all expired items from the cache.
 func (c *Cache[K, V]) DeleteExpired() {
+	now := nowFunc()
 	c.mu.Lock()
-	l := c.expManager.len()
-	c.mu.Unlock()
-
-	evict := func() bool {
-		key := c.expManager.pop()
-		// if is expired, delete it and return nil instead
-		item, ok := c.cache.Get(key)
-		if ok {
-			if item.Expired() {
-				c.cache.Delete(key)
-				return false
-			}
-			c.expManager.update(key, item.Expiration)
-		}
-		return true
-	}
-
-	for i := 0; i < l; i++ {
-		c.mu.Lock()
-		shouldBreak := evict()
-		c.mu.Unlock()
-		if shouldBreak {
+	defer c.mu.Unlock()
+	for {
+		t := c.expManager.top()
+		if t != nil && now.After(t.expiration) {
+			c.expManager.removeByItem(t)
+			c.cache.Delete(t.Val)
+		} else {
 			break
 		}
 	}
@@ -257,8 +244,19 @@ func (c *Cache[K, V]) Set(key K, val V, opts ...ItemOption) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	item := newItem(key, val, opts...)
-	if item.hasExpiration() {
-		c.expManager.update(key, item.Expiration)
+	if old, has := c.cache.Get(key); has && old.queueKey != nil {
+		if item.hasExpiration() {
+			c.expManager.updateByItem(old.queueKey, item.Expiration)
+		} else {
+			//if !opts.KeepTTL {
+			c.expManager.removeByItem(old.queueKey)
+			old.queueKey = nil
+			//}
+		}
+	} else {
+		if item.hasExpiration() {
+			item.queueKey = c.expManager.push(item.Key, item.Expiration)
+		}
 	}
 	c.cache.Set(key, item)
 }
@@ -274,8 +272,14 @@ func (c *Cache[K, V]) Keys() []K {
 func (c *Cache[K, V]) Delete(key K) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.cache.Delete(key)
-	c.expManager.remove(key)
+	old, has := c.cache.Get(key)
+	if has {
+		c.cache.Delete(key)
+		if old.queueKey != nil {
+			c.expManager.removeByItem(old.queueKey)
+			old.queueKey = nil
+		}
+	}
 }
 
 // Len returns the number of items in the cache.
