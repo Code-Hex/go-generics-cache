@@ -2,6 +2,7 @@ package simple_test
 
 import (
 	"fmt"
+	"testing"
 
 	"github.com/Code-Hex/go-generics-cache/policy/simple"
 )
@@ -46,4 +47,24 @@ func ExampleCache_Keys() {
 	// foo
 	// bar
 	// baz
+}
+
+func BenchmarkLenWithKeys(b *testing.B) {
+	c := simple.NewCache[string, int]()
+	c.Set("foo", 1)
+	c.Set("bar", 2)
+	c.Set("baz", 3)
+	for i := 0; i < b.N; i++ {
+		var _ = len(c.Keys())
+	}
+}
+
+func BenchmarkJustLen(b *testing.B) {
+	c := simple.NewCache[string, int]()
+	c.Set("foo", 1)
+	c.Set("bar", 2)
+	c.Set("baz", 3)
+	for i := 0; i < b.N; i++ {
+		var _ = c.Len()
+	}
 }
