@@ -7,6 +7,7 @@ import (
 
 	cache "github.com/Code-Hex/go-generics-cache"
 	"github.com/Code-Hex/go-generics-cache/policy/lfu"
+	"github.com/Code-Hex/go-generics-cache/policy/lru"
 )
 
 func ExampleCache() {
@@ -141,6 +142,19 @@ func ExampleCache_Contains() {
 	// Output:
 	// true
 	// false
+}
+
+func ExampleCache_GetOrSet() {
+	c := cache.New(cache.AsLRU[string, int](lru.WithCapacity(10)))
+	c.Set("a", 1)
+
+	val1, ok1 := c.GetOrSet("b", 2)
+	fmt.Println(val1, ok1)
+	val2, ok2 := c.GetOrSet("a", 3)
+	fmt.Println(val2, ok2)
+	// Output:
+	// 2 false
+	// 1 true
 }
 
 func ExampleNewNumber() {

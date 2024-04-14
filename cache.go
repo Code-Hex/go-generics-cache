@@ -222,6 +222,23 @@ func (c *Cache[K, V]) Get(key K) (zero V, ok bool) {
 	return item.Value, true
 }
 
+// GetOrSet atomically gets a key's value from the cache, or if the
+// key is not present, sets the given value.
+// The loaded result is true if the value was loaded, false if stored.
+func (c *Cache[K, V]) GetOrSet(key K, val V, opts ...ItemOption) (actual V, loaded bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	item, ok := c.cache.Get(key)
+
+	if !ok || item.Expired() {
+		item := newItem(key, val, opts...)
+		c.cache.Set(key, item)
+		return val, false
+	}
+
+	return item.Value, true
+}
+
 // DeleteExpired all expired items from the cache.
 func (c *Cache[K, V]) DeleteExpired() {
 	c.mu.Lock()
