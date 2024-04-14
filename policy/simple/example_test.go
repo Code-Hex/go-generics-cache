@@ -49,6 +49,17 @@ func ExampleCache_Keys() {
 	// baz
 }
 
+func ExampleCache_Len() {
+	c := simple.NewCache[string, int]()
+	c.Set("foo", 1)
+	c.Set("bar", 2)
+	c.Set("baz", 3)
+	len := c.Len()
+	fmt.Println(len)
+	// Output:
+	// 3
+}
+
 func BenchmarkLenWithKeys(b *testing.B) {
 	c := simple.NewCache[string, int]()
 	c.Set("foo", 1)
