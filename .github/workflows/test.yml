@@ -18,22 +18,21 @@ jobs:
         - '^1.18'
         - '^1.19'
         - '^1.20'
+        - '^1.21'
+        - '^1.22'
     steps:
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
-    - uses: actions/setup-go@v3
+      uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go }}
         cache: true
-    - name: Declare some variables
-      id: vars
-      run: |
-        echo "::set-output name=coverage_txt::${RUNNER_TEMP}/coverage.txt"
     - name: Test Coverage (pkg)
-      run: go test ./... -race -coverprofile=${{ steps.vars.outputs.coverage_txt }}
+      run: go test ./... -race -coverprofile="coverage.txt"
     - name: Upload coverage
-      if: ${{ matrix.go == '^1.20' }}
-      uses: codecov/codecov-action@v2
+      if: ${{ matrix.go == '^1.22' }}
+      uses: codecov/codecov-action@v4
       with:
-        files: ${{ steps.vars.outputs.coverage_txt }}
+        file: "coverage.txt"
+        token: ${{ secrets.CODECOV_TOKEN }}
 
