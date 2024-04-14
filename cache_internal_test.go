@@ -123,6 +123,26 @@ func TestDeleteExpired(t *testing.T) {
 			t.Errorf("want2 %d items but got2 %d", want2, got2)
 		}
 	})
+
+	t.Run("issue #51", func(t *testing.T) {
+		defer restore()
+		c := New[string, int]()
+
+		c.Set("1", 10, WithExpiration(10*time.Millisecond))
+		c.Set("2", 20, WithExpiration(20*time.Millisecond))
+		c.Set("1", 30, WithExpiration(100*time.Millisecond)) // expected do not expired key "1"
+
+		nowFunc = func() time.Time {
+			return now.Add(30 * time.Millisecond).Add(time.Millisecond)
+		}
+
+		c.DeleteExpired()
+
+		got := c.Len()
+		if want := 1; want != got {
+			t.Errorf("want %d items but got %d", want, got)
+		}
+	})
 }
 
 func max(x, y int) int {
