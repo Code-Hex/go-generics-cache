@@ -21,6 +21,7 @@ func newExpirationManager[K comparable]() *expirationManager[K] {
 
 func (m *expirationManager[K]) update(key K, expiration time.Time) {
 	if e, ok := m.mapping[key]; ok {
+		e.expiration = expiration
 		heap.Fix(&m.queue, e.index)
 	} else {
 		v := &expirationKey[K]{
