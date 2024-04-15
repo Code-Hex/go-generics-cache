@@ -143,6 +143,48 @@ func TestDeleteExpired(t *testing.T) {
 			t.Errorf("want %d items but got %d", want, got)
 		}
 	})
+
+	t.Run("keepTTL", func(t *testing.T) {
+
+		t.Run("incr must keep ttl", func(t *testing.T) {
+			defer restore()
+			c := NewNumber[string, int]()
+
+			c.Set("1", 10, WithExpiration(10*time.Millisecond))
+			c.Increment("1", 20)
+			nowFunc = func() time.Time {
+				return now.Add(30 * time.Millisecond).Add(time.Millisecond)
+			}
+			c.DeleteExpired()
+			if c.Len() != 0 {
+				t.Fail()
+			}
+		})
+
+		testCase := func(t *testing.T, wantN int, opts ...ItemOption) {
+			defer restore()
+			c := NewNumber[string, int]()
+
+			c.Set("1", 10, WithExpiration(10*time.Millisecond))
+			c.Set("1", 20, opts...)
+			nowFunc = func() time.Time {
+				return now.Add(300 * time.Millisecond).Add(time.Millisecond)
+			}
+			c.DeleteExpired()
+			if c.Len() != wantN {
+				t.Fail()
+			}
+		}
+		t.Run("must forever when default set", func(t *testing.T) {
+			testCase(t, 1)
+		})
+		t.Run("must expired when KeepTTL=true", func(t *testing.T) {
+			testCase(t, 0, WithKeepTTL())
+		})
+		t.Run("must forever when KeepTTL=false", func(t *testing.T) {
+			testCase(t, 1, WithKeepTTL(false))
+		})
+	})
 }
 
 func max(x, y int) int {
