@@ -100,3 +100,16 @@ func TestIssue33(t *testing.T) {
 	cache.Delete("foo2")
 	cache.Delete("foo3")
 }
+
+func TestZeroCap(t *testing.T) {
+	cache := lfu.NewCache[string, int](lfu.WithCapacity(0))
+	cache.Set("foo", 1)
+
+	v, ok := cache.Get("foo")
+	if !ok {
+		t.Error(ok)
+	}
+	if v != 1 {
+		t.Error(v)
+	}
+}
