@@ -333,3 +333,30 @@ func BenchmarkCacheSetTTL(b *testing.B) {
 		return min(maxKeySize, b.N)
 	})
 }
+
+func TestTTLClear(t *testing.T) {
+	const maxKeySize = 30000
+	seed := _testRandGen.Int63()
+	restore := func() {
+		nowFunc = time.Now
+	}
+	allCacheTest(t, func(t *testing.T, c *Cache[int, int]) {
+		_testRandGen.Seed(seed)
+		nt := time.Now()
+		nowFunc = func() time.Time { return nt }
+		defer restore()
+		for i := 0; i < maxKeySize; i++ {
+			c.Set(_testRandGen.Int()%maxKeySize, i, WithExpiration(time.Second*time.Duration(_testRandGen.Int()%4000)))
+		}
+		nowFunc = func() time.Time { return nt.Add(time.Second * 2000) }
+		take := time.Now()
+		len1 := c.Len()
+		c.DeleteExpired()
+		n := len1 - c.Len()
+		t.Log("clear expired", n, time.Now().Sub(take))
+
+	}, func(b *testing.T, tp int) int {
+		return maxKeySize
+	})
+
+}
