@@ -166,7 +166,7 @@ func min(x, y int) int {
 	return y
 }
 
-func compactGcTest[K comparable, V any](b *testing.B, f func(cache *Cache[K, V]), newOpts ...Option[K, V]) {
+func compactGcBenchmark[K comparable, V any](b *testing.B, f func(cache *Cache[K, V]), newOpts ...Option[K, V]) {
 	b.StopTimer()
 	time.Sleep(0)
 	runtime.GC()
@@ -196,42 +196,99 @@ const (
 	caseTypeFIFO
 )
 
-func allCacheTest[K comparable, V any](b *testing.B,
+func allCacheBenchmark[K comparable, V any](b *testing.B,
 	testCase func(b *testing.B, c *Cache[K, V]),
 	withCapCount func(b *testing.B, tp int) int) {
 	b.Run("simple", func(b *testing.B) {
-		compactGcTest(b, func(c *Cache[K, V]) {
+		compactGcBenchmark(b, func(c *Cache[K, V]) {
 			testCase(b, c)
 		})
 	})
 	b.Run("LRU", func(b *testing.B) {
 		cn := withCapCount(b, caseTypeLRU)
-		compactGcTest(b, func(c *Cache[K, V]) {
+		compactGcBenchmark(b, func(c *Cache[K, V]) {
 			testCase(b, c)
 		}, AsLRU[K, V](lru.WithCapacity(cn)))
 	})
 	b.Run("LFU", func(b *testing.B) {
 		cn := withCapCount(b, caseTypeLFU)
-		compactGcTest(b, func(c *Cache[K, V]) {
+		compactGcBenchmark(b, func(c *Cache[K, V]) {
 			testCase(b, c)
 		}, AsLFU[K, V](lfu.WithCapacity(cn)))
 	})
 	b.Run("MRU", func(b *testing.B) {
 		cn := withCapCount(b, caseTypeMRU)
-		compactGcTest(b, func(c *Cache[K, V]) {
+		compactGcBenchmark(b, func(c *Cache[K, V]) {
 			testCase(b, c)
 		}, AsMRU[K, V](mru.WithCapacity(cn)))
 	})
 	b.Run("Clock", func(b *testing.B) {
 		cn := withCapCount(b, caseTypeClock)
-		compactGcTest(b, func(c *Cache[K, V]) {
+		compactGcBenchmark(b, func(c *Cache[K, V]) {
 			testCase(b, c)
 		}, AsClock[K, V](clock.WithCapacity(cn)))
 	})
 	b.Run("FIFO", func(b *testing.B) {
 		cn := withCapCount(b, caseTypeFIFO)
-		compactGcTest(b, func(c *Cache[K, V]) {
+		compactGcBenchmark(b, func(c *Cache[K, V]) {
 			testCase(b, c)
+		}, AsFIFO[K, V](fifo.WithCapacity(cn)))
+	})
+}
+
+func compactGcTest[K comparable, V any](t *testing.T, f func(cache *Cache[K, V]), newOpts ...Option[K, V]) {
+	time.Sleep(0)
+	runtime.GC()
+	debug.FreeOSMemory()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cs := NewContext[K, V](ctx, newOpts...)
+	f(cs)
+
+	cancel()
+	cs = nil
+	f = nil
+	time.Sleep(0)
+	runtime.GC()
+	debug.FreeOSMemory()
+}
+
+func allCacheTest[K comparable, V any](t *testing.T,
+	testCase func(t *testing.T, c *Cache[K, V]),
+	withCapCount func(t *testing.T, tp int) int) {
+	t.Run("simple", func(t *testing.T) {
+		compactGcTest(t, func(c *Cache[K, V]) {
+			testCase(t, c)
+		})
+	})
+	t.Run("LRU", func(t *testing.T) {
+		cn := withCapCount(t, caseTypeLRU)
+		compactGcTest(t, func(c *Cache[K, V]) {
+			testCase(t, c)
+		}, AsLRU[K, V](lru.WithCapacity(cn)))
+	})
+	t.Run("LFU", func(t *testing.T) {
+		cn := withCapCount(t, caseTypeLFU)
+		compactGcTest(t, func(c *Cache[K, V]) {
+			testCase(t, c)
+		}, AsLFU[K, V](lfu.WithCapacity(cn)))
+	})
+	t.Run("MRU", func(t *testing.T) {
+		cn := withCapCount(t, caseTypeMRU)
+		compactGcTest(t, func(c *Cache[K, V]) {
+			testCase(t, c)
+		}, AsMRU[K, V](mru.WithCapacity(cn)))
+	})
+	t.Run("Clock", func(t *testing.T) {
+		cn := withCapCount(t, caseTypeClock)
+		compactGcTest(t, func(c *Cache[K, V]) {
+			testCase(t, c)
+		}, AsClock[K, V](clock.WithCapacity(cn)))
+	})
+	t.Run("FIFO", func(t *testing.T) {
+		cn := withCapCount(t, caseTypeFIFO)
+		compactGcTest(t, func(c *Cache[K, V]) {
+			testCase(t, c)
 		}, AsFIFO[K, V](fifo.WithCapacity(cn)))
 	})
 }
@@ -241,7 +298,7 @@ var _testRandGen = rand.New(rand.NewSource(12345678))
 
 func BenchmarkSet(b *testing.B) {
 	const maxKeySize = 2000000 // -benchtime=10s use mem:~300-700mb
-	allCacheTest(b, func(b *testing.B, c *Cache[int, int]) {
+	allCacheBenchmark(b, func(b *testing.B, c *Cache[int, int]) {
 		for i := 0; i < b.N; i++ {
 			c.Set(_testRandGen.Int()%maxKeySize, i)
 		}
@@ -252,7 +309,7 @@ func BenchmarkSet(b *testing.B) {
 
 func BenchmarkGetExist(b *testing.B) {
 	const maxKeySize = 2000000 // -benchtime=10s use mem:~300-700mb
-	allCacheTest(b, func(b *testing.B, c *Cache[int, int]) {
+	allCacheBenchmark(b, func(b *testing.B, c *Cache[int, int]) {
 		b.StopTimer()
 		for i := 0; i < b.N; i++ {
 			c.Set(_testRandGen.Int()%maxKeySize, i)
@@ -268,7 +325,7 @@ func BenchmarkGetExist(b *testing.B) {
 
 func BenchmarkCacheSetTTL(b *testing.B) {
 	const maxKeySize = 2000000 // -benchtime=10s use mem:~300-700mb
-	allCacheTest(b, func(b *testing.B, c *Cache[int, int]) {
+	allCacheBenchmark(b, func(b *testing.B, c *Cache[int, int]) {
 		for i := 0; i < b.N; i++ {
 			c.Set(_testRandGen.Int()%maxKeySize, i, WithExpiration(time.Hour))
 		}
