@@ -72,6 +72,7 @@ type ItemOption func(*itemOptions)
 type itemOptions struct {
 	expiration     time.Time // default none
 	referenceCount int
+	keepTTL        bool
 }
 
 // WithExpiration is an option to set expiration time for any items.
@@ -79,6 +80,17 @@ type itemOptions struct {
 func WithExpiration(exp time.Duration) ItemOption {
 	return func(o *itemOptions) {
 		o.expiration = nowFunc().Add(exp)
+	}
+}
+
+// WithKeepTTL is the expiration time to keep existing keys when calling Set. By default, it is replaced by the new time or never expires.
+func WithKeepTTL(_keep ...bool) ItemOption {
+	return func(o *itemOptions) {
+		if len(_keep) > 0 {
+			o.keepTTL = _keep[0]
+		} else {
+			o.keepTTL = true
+		}
 	}
 }
 
@@ -94,7 +106,7 @@ func WithReferenceCount(referenceCount int) ItemOption {
 }
 
 // newItem creates a new item with specified any options.
-func newItem[K comparable, V any](key K, val V, opts ...ItemOption) *Item[K, V] {
+func newItem[K comparable, V any](key K, val V, opts ...ItemOption) (*Item[K, V], *itemOptions) {
 	o := new(itemOptions)
 	for _, optFunc := range opts {
 		optFunc(o)
@@ -104,7 +116,7 @@ func newItem[K comparable, V any](key K, val V, opts ...ItemOption) *Item[K, V] 
 		Value:                 val,
 		Expiration:            o.expiration,
 		InitialReferenceCount: o.referenceCount,
-	}
+	}, o
 }
 
 // Cache is a thread safe cache.
@@ -231,8 +243,11 @@ func (c *Cache[K, V]) GetOrSet(key K, val V, opts ...ItemOption) (actual V, load
 	item, ok := c.cache.Get(key)
 
 	if !ok || item.Expired() {
-		item := newItem(key, val, opts...)
-		c.cache.Set(key, item)
+		replaceItem, o := newItem(key, val, opts...)
+		if o.keepTTL && ok && !replaceItem.hasExpiration() {
+			replaceItem.Expiration = item.Expiration
+		}
+		c.cache.Set(key, replaceItem)
 		return val, false
 	}
 
@@ -273,9 +288,13 @@ func (c *Cache[K, V]) DeleteExpired() {
 func (c *Cache[K, V]) Set(key K, val V, opts ...ItemOption) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	item := newItem(key, val, opts...)
+	item, o := newItem(key, val, opts...)
 	if item.hasExpiration() {
 		c.expManager.update(key, item.Expiration)
+	} else if o.keepTTL {
+		if old, has := c.cache.Get(key); has {
+			item.Expiration = old.Expiration
+		}
 	}
 	c.cache.Set(key, item)
 }
@@ -334,7 +353,7 @@ func (nc *NumberCache[K, V]) Increment(key K, n V) V {
 	defer nc.nmu.Unlock()
 	got, _ := nc.Cache.Get(key)
 	nv := got + n
-	nc.Cache.Set(key, nv)
+	nc.Cache.Set(key, nv, WithKeepTTL())
 	return nv
 }
 
@@ -345,6 +364,6 @@ func (nc *NumberCache[K, V]) Decrement(key K, n V) V {
 	defer nc.nmu.Unlock()
 	got, _ := nc.Cache.Get(key)
 	nv := got - n
-	nc.Cache.Set(key, nv)
+	nc.Cache.Set(key, nv, WithKeepTTL())
 	return nv
 }
