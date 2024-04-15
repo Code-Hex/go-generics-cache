@@ -2,6 +2,14 @@ package cache
 
 import (
 	"context"
+	"github.com/Code-Hex/go-generics-cache/policy/clock"
+	"github.com/Code-Hex/go-generics-cache/policy/fifo"
+	"github.com/Code-Hex/go-generics-cache/policy/lfu"
+	"github.com/Code-Hex/go-generics-cache/policy/lru"
+	"github.com/Code-Hex/go-generics-cache/policy/mru"
+	"math/rand"
+	"runtime"
+	"runtime/debug"
 	"testing"
 	"time"
 )
@@ -150,4 +158,121 @@ func max(x, y int) int {
 		return y
 	}
 	return x
+}
+func min(x, y int) int {
+	if x < y {
+		return x
+	}
+	return y
+}
+
+func compactGcTest[K comparable, V any](b *testing.B, f func(cache *Cache[K, V]), newOpts ...Option[K, V]) {
+	b.StopTimer()
+	time.Sleep(0)
+	runtime.GC()
+	debug.FreeOSMemory()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cs := NewContext[K, V](ctx, newOpts...)
+	b.StartTimer()
+	f(cs)
+	b.StopTimer()
+
+	cancel()
+	cs = nil
+	f = nil
+	time.Sleep(0)
+	runtime.GC()
+	debug.FreeOSMemory()
+	b.StartTimer()
+}
+
+const (
+	_ = iota
+	caseTypeLRU
+	caseTypeLFU
+	caseTypeMRU
+	caseTypeClock
+	caseTypeFIFO
+)
+
+func allCacheTest[K comparable, V any](b *testing.B,
+	testCase func(b *testing.B, c *Cache[K, V]),
+	withCapCount func(b *testing.B, tp int) int) {
+	b.Run("simple", func(b *testing.B) {
+		compactGcTest(b, func(c *Cache[K, V]) {
+			testCase(b, c)
+		})
+	})
+	b.Run("LRU", func(b *testing.B) {
+		cn := withCapCount(b, caseTypeLRU)
+		compactGcTest(b, func(c *Cache[K, V]) {
+			testCase(b, c)
+		}, AsLRU[K, V](lru.WithCapacity(cn)))
+	})
+	b.Run("LFU", func(b *testing.B) {
+		cn := withCapCount(b, caseTypeLFU)
+		compactGcTest(b, func(c *Cache[K, V]) {
+			testCase(b, c)
+		}, AsLFU[K, V](lfu.WithCapacity(cn)))
+	})
+	b.Run("MRU", func(b *testing.B) {
+		cn := withCapCount(b, caseTypeMRU)
+		compactGcTest(b, func(c *Cache[K, V]) {
+			testCase(b, c)
+		}, AsMRU[K, V](mru.WithCapacity(cn)))
+	})
+	b.Run("Clock", func(b *testing.B) {
+		cn := withCapCount(b, caseTypeClock)
+		compactGcTest(b, func(c *Cache[K, V]) {
+			testCase(b, c)
+		}, AsClock[K, V](clock.WithCapacity(cn)))
+	})
+	b.Run("FIFO", func(b *testing.B) {
+		cn := withCapCount(b, caseTypeFIFO)
+		compactGcTest(b, func(c *Cache[K, V]) {
+			testCase(b, c)
+		}, AsFIFO[K, V](fifo.WithCapacity(cn)))
+	})
+}
+
+// var _testRandGen = rand.New(rand.NewSource(time.Now().Unix()))
+var _testRandGen = rand.New(rand.NewSource(12345678))
+
+func BenchmarkSet(b *testing.B) {
+	const maxKeySize = 2000000 // -benchtime=10s use mem:~300-700mb
+	allCacheTest(b, func(b *testing.B, c *Cache[int, int]) {
+		for i := 0; i < b.N; i++ {
+			c.Set(_testRandGen.Int()%maxKeySize, i)
+		}
+	}, func(b *testing.B, tp int) int {
+		return min(maxKeySize, b.N)
+	})
+}
+
+func BenchmarkGetExist(b *testing.B) {
+	const maxKeySize = 2000000 // -benchtime=10s use mem:~300-700mb
+	allCacheTest(b, func(b *testing.B, c *Cache[int, int]) {
+		b.StopTimer()
+		for i := 0; i < b.N; i++ {
+			c.Set(_testRandGen.Int()%maxKeySize, i)
+		}
+		b.StartTimer()
+		for i := 0; i < b.N; i++ {
+			c.Get(_testRandGen.Int() % maxKeySize)
+		}
+	}, func(b *testing.B, tp int) int {
+		return min(maxKeySize, b.N)
+	})
+}
+
+func BenchmarkCacheSetTTL(b *testing.B) {
+	const maxKeySize = 2000000 // -benchtime=10s use mem:~300-700mb
+	allCacheTest(b, func(b *testing.B, c *Cache[int, int]) {
+		for i := 0; i < b.N; i++ {
+			c.Set(_testRandGen.Int()%maxKeySize, i, WithExpiration(time.Hour))
+		}
+	}, func(b *testing.B, tp int) int {
+		return min(maxKeySize, b.N)
+	})
 }
