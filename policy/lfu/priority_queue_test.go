@@ -113,3 +113,56 @@ func Test_priorityQueue_Swap(t *testing.T) {
 		})
 	}
 }
+
+func TestPriorityQueue_Pop(t *testing.T) {
+	t.Run("Pop from empty queue", func(t *testing.T) {
+		pq := newPriorityQueue[int, string](0)
+		if elem := heap.Pop(pq); elem != nil {
+			t.Errorf("Expected nil from empty queue, got %v", elem)
+		}
+	})
+
+	t.Run("Pop from queue with single element", func(t *testing.T) {
+		pq := newPriorityQueue[int, string](10)
+		heap.Push(pq, newEntry(1, "one"))
+		if pq.Len() != 1 {
+			t.Fatalf("Expected queue length of 1, got %d", pq.Len())
+		}
+		elem := heap.Pop(pq).(*entry[int, string])
+		if elem.key != 1 || elem.val != "one" {
+			t.Errorf("Expected to pop element with key=1 and val='one', got key=%d and val='%s'", elem.key, elem.val)
+		}
+		if pq.Len() != 0 {
+			t.Errorf("Expected empty queue after pop, got length %d", pq.Len())
+		}
+	})
+
+	t.Run("Pop from queue with multiple elements", func(t *testing.T) {
+		pq := newPriorityQueue[int, string](10)
+		heap.Push(pq, newEntry(1, "one"))
+		heap.Push(pq, newEntry(2, "two"))
+		heap.Push(pq, newEntry(3, "three"))
+
+		// Pop the first element
+		elem := heap.Pop(pq).(*entry[int, string])
+		if elem.key != 1 || elem.val != "one" {
+			t.Errorf("Expected to pop element with key=1 and val='one', got key=%d and val='%s'", elem.key, elem.val)
+		}
+
+		// Pop the second element
+		elem = heap.Pop(pq).(*entry[int, string])
+		if elem.key != 2 || elem.val != "two" {
+			t.Errorf("Expected to pop element with key=2 and val='two', got key=%d and val='%s'", elem.key, elem.val)
+		}
+
+		// Pop the third element
+		elem = heap.Pop(pq).(*entry[int, string])
+		if elem.key != 3 || elem.val != "three" {
+			t.Errorf("Expected to pop element with key=3 and val='three', got key=%d and val='%s'", elem.key, elem.val)
+		}
+
+		if pq.Len() != 0 {
+			t.Errorf("Expected empty queue after all pops, got length %d", pq.Len())
+		}
+	})
+}
