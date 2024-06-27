@@ -254,7 +254,9 @@ func (c *Cache[K, V]) DeleteExpired() {
 			c.cache.Delete(key)
 			return true
 		}
-		c.expManager.update(key, expiration)
+		if _, ok := c.cache.Get(key); ok {
+			c.expManager.update(key, expiration)
+		}
 		return false
 	}
 
