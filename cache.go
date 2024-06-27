@@ -249,16 +249,12 @@ func (c *Cache[K, V]) DeleteExpired() {
 		if c.expManager.len() == 0 {
 			return false
 		}
-		key := c.expManager.pop()
-		// if is expired, delete it and return nil instead
-		item, ok := c.cache.Get(key)
-		if ok {
-			if item.Expired() {
-				c.cache.Delete(key)
-				return true
-			}
-			c.expManager.update(key, item.Expiration)
+		key, expiration := c.expManager.pop()
+		if nowFunc().After(expiration) {
+			c.cache.Delete(key)
+			return true
 		}
+		c.expManager.update(key, expiration)
 		return false
 	}
 
