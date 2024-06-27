@@ -50,6 +50,8 @@ func (item *Item[K, V]) hasExpiration() bool {
 	return !item.Expiration.IsZero()
 }
 
+//Print tries to make a readable log of the item
+
 // Expired returns true if the item has expired.
 func (item *Item[K, V]) Expired() bool {
 	if !item.hasExpiration() {
@@ -241,31 +243,26 @@ func (c *Cache[K, V]) GetOrSet(key K, val V, opts ...ItemOption) (actual V, load
 
 // DeleteExpired all expired items from the cache.
 func (c *Cache[K, V]) DeleteExpired() {
-	c.mu.Lock()
-	l := c.expManager.len()
-	c.mu.Unlock()
-
 	evict := func() bool {
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		if c.expManager.len() == 0 {
+			return false
+		}
 		key := c.expManager.pop()
 		// if is expired, delete it and return nil instead
 		item, ok := c.cache.Get(key)
 		if ok {
 			if item.Expired() {
 				c.cache.Delete(key)
-				return false
+				return true
 			}
 			c.expManager.update(key, item.Expiration)
 		}
-		return true
+		return false
 	}
 
-	for i := 0; i < l; i++ {
-		c.mu.Lock()
-		shouldBreak := evict()
-		c.mu.Unlock()
-		if shouldBreak {
-			break
-		}
+	for evict() {
 	}
 }
 
