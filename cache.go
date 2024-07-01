@@ -50,8 +50,6 @@ func (item *Item[K, V]) hasExpiration() bool {
 	return !item.Expiration.IsZero()
 }
 
-//Print tries to make a readable log of the item
-
 // Expired returns true if the item has expired.
 func (item *Item[K, V]) Expired() bool {
 	if !item.hasExpiration() {
