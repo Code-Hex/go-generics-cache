@@ -37,11 +37,12 @@ func (m *expirationManager[K]) len() int {
 	return m.queue.Len()
 }
 
-func (m *expirationManager[K]) pop() K {
+func (m *expirationManager[K]) pop() (K, time.Time) {
 	v := heap.Pop(&m.queue)
 	key := v.(*expirationKey[K]).key
+	exp := v.(*expirationKey[K]).expiration
 	delete(m.mapping, key)
-	return key
+	return key, exp
 }
 
 func (m *expirationManager[K]) remove(key K) {
