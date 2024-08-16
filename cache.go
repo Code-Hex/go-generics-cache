@@ -226,8 +226,8 @@ func (c *Cache[K, V]) Get(key K) (zero V, ok bool) {
 // key is not present, sets the given value.
 // The loaded result is true if the value was loaded, false if stored.
 func (c *Cache[K, V]) GetOrSet(key K, val V, opts ...ItemOption) (actual V, loaded bool) {
-	actual = c.ModifyFn(key, func(key K, item *Item[K, V], found bool) (V, []ItemOption) {
-		if !found || item.Expired() {
+	actual = c.ModifyFn(key, func(key K, item *Item[K, V]) (V, []ItemOption) {
+		if item == nil || item.Expired() {
 			return val, opts
 		}
 		loaded = true
@@ -268,7 +268,7 @@ func (c *Cache[K, V]) DeleteExpired() {
 
 // Set sets a value to the cache with key. replacing any existing value.
 func (c *Cache[K, V]) Set(key K, val V, opts ...ItemOption) {
-	c.ModifyFn(key, func(K, *Item[K, V], bool) (V, []ItemOption) {
+	c.ModifyFn(key, func(K, *Item[K, V]) (V, []ItemOption) {
 		return val, opts
 	})
 }
@@ -307,8 +307,8 @@ func (c *Cache[K, V]) Contains(key K) bool {
 // key is not present, calls the given function to calculate the value.
 // Returns the value stored in the cache.
 func (c *Cache[K, V]) GetOrSetFn(key K, calc func(K) (V, []ItemOption)) V {
-	return c.ModifyFn(key, func(key K, item *Item[K, V], found bool) (V, []ItemOption) {
-		if found {
+	return c.ModifyFn(key, func(key K, item *Item[K, V]) (V, []ItemOption) {
+		if item != nil {
 			return item.Value, nil
 		}
 		return calc(key)
@@ -317,13 +317,13 @@ func (c *Cache[K, V]) GetOrSetFn(key K, calc func(K) (V, []ItemOption)) V {
 
 // ModifyFn gets a key's value from the cache, and calls the given function to modify the value,
 // stores the modified value back to the cache. Returns the value stored in the cache.
-func (c *Cache[K, V]) ModifyFn(key K, modify func(K, *Item[K, V], bool) (V, []ItemOption)) V {
+func (c *Cache[K, V]) ModifyFn(key K, modify func(K, *Item[K, V]) (V, []ItemOption)) V {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	item, ok := c.cache.Get(key)
+	item, _ := c.cache.Get(key)
 
-	val, options := modify(key, item, ok)
+	val, options := modify(key, item)
 
 	item = newItem(key, val, options...)
 	if item.hasExpiration() {
@@ -349,8 +349,8 @@ func NewNumber[K comparable, V Number](opts ...Option[K, V]) *NumberCache[K, V] 
 // Increment an item of type Number constraint by n.
 // Returns the incremented value.
 func (nc *NumberCache[K, V]) Increment(key K, n V) V {
-	return nc.ModifyFn(key, func(key K, item *Item[K, V], found bool) (V, []ItemOption) {
-		if found {
+	return nc.ModifyFn(key, func(key K, item *Item[K, V]) (V, []ItemOption) {
+		if item != nil {
 			return item.Value + n, nil
 		}
 		return n, nil
