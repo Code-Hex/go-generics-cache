@@ -305,7 +305,7 @@ func (c *Cache[K, V]) Contains(key K) bool {
 
 // GetOrSetFn atomically gets a key's value from the cache, or if the
 // key is not present, calls the given function to calculate the value.
-// Returns
+// Returns the value stored in the cache.
 func (c *Cache[K, V]) GetOrSetFn(key K, calc func(K) (V, []ItemOption)) V {
 	return c.ModifyFn(key, func(key K, item *Item[K, V], found bool) (V, []ItemOption) {
 		if found {
@@ -315,7 +315,8 @@ func (c *Cache[K, V]) GetOrSetFn(key K, calc func(K) (V, []ItemOption)) V {
 	})
 }
 
-// ModifyFn gets a key's value from the cache, and calls the given function to modify the value.
+// ModifyFn gets a key's value from the cache, and calls the given function to modify the value,
+// stores the modified value back to the cache. Returns the value stored in the cache.
 func (c *Cache[K, V]) ModifyFn(key K, modify func(K, *Item[K, V], bool) (V, []ItemOption)) V {
 	c.mu.Lock()
 	defer c.mu.Unlock()
