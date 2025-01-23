@@ -143,6 +143,30 @@ func TestDeleteExpired(t *testing.T) {
 			t.Errorf("want %d items but got %d", want, got)
 		}
 	})
+
+	t.Run("issue #64", func(t *testing.T) {
+		defer restore()
+		c := New[string, int]()
+		c.Set("1", 4, WithExpiration(0))  // These should not be expired
+		c.Set("2", 5, WithExpiration(-1)) // These should not be expired
+		c.Set("3", 6, WithExpiration(1*time.Hour))
+
+		want := true
+		_, ok := c.Get("1")
+		if ok != want {
+			t.Errorf("want %t but got %t", want, ok)
+		}
+
+		_, ok = c.Get("2")
+		if ok != want {
+			t.Errorf("want %t but got %t", want, ok)
+		}
+		_, ok = c.Get("3")
+		if ok != want {
+			t.Errorf("want %t but got %t", want, ok)
+		}
+
+	})
 }
 
 func max(x, y int) int {
