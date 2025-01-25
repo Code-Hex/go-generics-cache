@@ -9,11 +9,17 @@ import (
 func TestDeletedCache(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	restore := func() {
+		nowFunc = time.Now
+	}
+	defer restore()
 
 	nc := NewContext[string, int](ctx)
 	key := "key"
-	nc.Set(key, 1, WithExpiration(-time.Second))
-
+	nc.Set(key, 1, WithExpiration(1*time.Second))
+	nowFunc = func() time.Time {
+		return time.Now().Add(2 * time.Second)
+	}
 	_, ok := nc.cache.Get(key)
 	if !ok {
 		t.Fatal("want true")
