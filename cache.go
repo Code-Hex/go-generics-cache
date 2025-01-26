@@ -77,6 +77,9 @@ type itemOptions struct {
 // WithExpiration is an option to set expiration time for any items.
 // If the expiration is zero or negative value, it treats as w/o expiration.
 func WithExpiration(exp time.Duration) ItemOption {
+	if exp <= 0 {
+		return func(o *itemOptions) {}
+	}
 	return func(o *itemOptions) {
 		o.expiration = nowFunc().Add(exp)
 	}
