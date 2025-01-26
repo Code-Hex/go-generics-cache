@@ -2,7 +2,9 @@ package cache_test
 
 import (
 	"math/rand"
+	"strconv"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -120,4 +122,39 @@ func TestCallJanitor(t *testing.T) {
 	if len(keys) != 0 {
 		t.Errorf("want items is empty but got %d", len(keys))
 	}
+}
+
+func TestConcurrentDelete(t *testing.T) {
+	c := cache.New[string, int]()
+	var (
+		wg      sync.WaitGroup
+		stop    atomic.Bool
+		timeout = 10 * time.Second
+	)
+
+	if testing.Short() {
+		timeout = 100 * time.Millisecond
+	}
+	time.AfterFunc(timeout, func() {
+		stop.Store(true)
+	})
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for k := 1; !stop.Load(); k++ {
+			c.Set(strconv.Itoa(k), k, cache.WithExpiration(0))
+			c.Delete(strconv.Itoa(k))
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for !stop.Load() {
+			c.DeleteExpired()
+		}
+	}()
+
+	wg.Wait()
 }

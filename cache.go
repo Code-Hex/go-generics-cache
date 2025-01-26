@@ -244,31 +244,24 @@ func (c *Cache[K, V]) GetOrSet(key K, val V, opts ...ItemOption) (actual V, load
 
 // DeleteExpired all expired items from the cache.
 func (c *Cache[K, V]) DeleteExpired() {
-	c.mu.Lock()
-	l := c.expManager.len()
-	c.mu.Unlock()
-
 	evict := func() bool {
-		key := c.expManager.pop()
-		// if is expired, delete it and return nil instead
-		item, ok := c.cache.Get(key)
-		if ok {
-			if item.Expired() {
-				c.cache.Delete(key)
-				return false
-			}
-			c.expManager.update(key, item.Expiration)
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		if c.expManager.len() == 0 {
+			return false
 		}
-		return true
+		key, expiration := c.expManager.pop()
+		if nowFunc().After(expiration) {
+			c.cache.Delete(key)
+			return true
+		}
+		if _, ok := c.cache.Get(key); ok {
+			c.expManager.update(key, expiration)
+		}
+		return false
 	}
 
-	for i := 0; i < l; i++ {
-		c.mu.Lock()
-		shouldBreak := evict()
-		c.mu.Unlock()
-		if shouldBreak {
-			break
-		}
+	for evict() {
 	}
 }
 
